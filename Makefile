@@ -24,6 +24,6 @@ deploy: $(srcdir) $(dbdir)
 perms:
 	sudo chgrp -Rc $(wwwgroup) $(wwwfiles)
 	sudo chown -Rc $(wwwuser)  $(wwwfiles)
-	find $(codeigniter) -type d -print0 | xargs -0r sudo chmod -c 0755
-	find $(codeigniter) -type f -print0 | xargs -0r sudo chmod -c 0644
+	find $(codeigniter) $(application) $(htdocs) -type d -print0 | xargs -0r sudo chmod -c 0755
+	find $(codeigniter) $(application) $(htdocs) -type f -print0 | xargs -0r sudo chmod -c 0644
 
