@@ -22,7 +22,8 @@ create table users (
 	last_ip			inet				not null,
 	last_login		timestamp with time zone	not null default CURRENT_TIMESTAMP,
 	created			timestamp with time zone	not null default CURRENT_TIMESTAMP,
-	modified		timestamp with time zone	not null default CURRENT_TIMESTAMP
+	modified		timestamp with time zone	not null default CURRENT_TIMESTAMP,
+	primary key (id)
 );
 
 alter sequence users_id_seq owned by users.id;
