@@ -23,11 +23,21 @@ reset:
 
 #=======================================================================
 
+.answers.done: answers.sql
+
 .ci_sessions.done: ci_sessions.sql
 
 .login_attempts.done: login_attempts.sql
 
 .plpgsql.done: plpgsql.sql
+
+.questions.done: questions.sql
+
+.questions_answers.done: questions_answers.sql .questions.done .answers.done
+
+.surveys.done: surveys.sql
+
+.surveys_questions.done: surveys_questions.sql .surveys.done .questions.done
 
 .unix_timestamp.done: unix_timestamp.sql
 
