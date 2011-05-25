@@ -7,6 +7,8 @@ sql		= $(wildcard *.sql)
 items		= $(basename $(sql))
 items_done	= $(addprefix .,$(addsuffix .done,$(items)))
 
+srcdir		= $(shell readlink -f $(HOME)/DALICO_FILES)
+
 .PHONY: all deploy perms reset
 
 all:
@@ -23,9 +25,16 @@ reset:
 
 #=======================================================================
 
+dalby_data.sql: $(srcdir)/dalby_data.sql
+	cp $< $@
+
 .answers.done: answers.sql
 
 .ci_sessions.done: ci_sessions.sql
+
+.dalby_data.done: dalby_data.sql .dalby_schema.done
+
+.dalby_schema.done: dalby_schema.sql .users.done .surveys.done .questions_answers.done
 
 .login_attempts.done: login_attempts.sql
 
