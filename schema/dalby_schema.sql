@@ -16,6 +16,11 @@ create table vcs (
 	primary key (id)
 );
 
+copy vcs (name) from stdin;
+Dalby
+Bara
+\.
+
 create table idops (
 	id	serial,
 	usr	integer,
@@ -26,6 +31,12 @@ create table idops (
 	foreign key (vc)	references vcs (id)	on delete restrict on update cascade
 );
 
+insert into idops (name, vc) values
+('Olsson', (select id from vcs where name = 'Dalby')),
+('Hallberg', (select id from vcs where name = 'Bara')),
+('Hedberg', (select id from vcs where name = 'Bara')),
+('Nilsson', (select id from vcs where name = 'Bara'));
+
 create table lists (
 	id	serial,
 	idop	integer,
@@ -34,6 +45,14 @@ create table lists (
 	foreign key (idop)	references idops (id)	on delete restrict on update cascade,
 	unique (idop, num)
 );
+
+insert into lists (idop, num) values
+((select id from idops where name = 'Olsson'), 1),
+((select id from idops where name = 'Hallberg'), 1),
+((select id from idops where name = 'Nilsson'), 1),
+((select id from idops where name = 'Hedberg'), 1),
+((select id from idops where name = 'Olsson'), 2);
+
 
 create table patients (
 	token	varchar(10),
@@ -56,7 +75,8 @@ create table responses (
 	patient	varchar(10),
 	survey	integer,
 	primary key (id),
-	foreign key (patient, survey)	references patients_surveys (patient, survey)	on delete restrict on update cascade
+	foreign key (patient, survey)	references patients_surveys (patient, survey)	on delete restrict on update cascade,
+	unique (stamp, patient, survey)
 );
 
 create table rdet (

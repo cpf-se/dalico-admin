@@ -1,13 +1,13 @@
 
-drop table if exists questions_answers restrict;
+drop table if exists questions_answers cascade;
 
 create table questions_answers (
 	question	integer		not null,
 	answer		integer		not null,
 	ord		integer		not null,
 	primary key (question, answer),
-	foreign key (question) references questions (id),
-	foreign key (answer)   references answers   (id)
+	foreign key (question) references questions (id)	on delete restrict on update cascade,
+	foreign key (answer)   references answers   (id)	on delete restrict on update cascade
 );
 
 copy questions_answers (question, answer, ord) from stdin;
@@ -625,5 +625,107 @@ copy questions_answers (question, answer, ord) from stdin;
 138	1335	5
 138	1336	6
 138	1347	7
+139	135	1
+139	136	2
+139	137	3
+139	138	4
+1401	57	1
+1401	21	2
+142	148	1
+142	149	2
+142	150	3
+142	151	4
+142	152	5
+143	57	1
+143	21	2
+144	153	1
+144	154	2
+144	155	3
+144	156	4
+146	1570	1
+146	1571	2
+146	1572	3
+146	1573	4
+146	1574	5
+146	1575	6
+147	1570	1
+147	1571	2
+147	1572	3
+147	1573	4
+147	1574	5
+147	1575	6
+148	1570	1
+148	1571	2
+148	1572	3
+148	1573	4
+148	1574	5
+148	1575	6
+149	1570	1
+149	1571	2
+149	1572	3
+149	1573	4
+149	1574	5
+149	1575	6
+150	1581	1
+150	1582	2
+150	1583	3
+150	1584	4
+150	1585	5
+151	1570	1
+151	1571	2
+151	1572	3
+151	1573	4
+151	1574	5
+151	1575	6
+152	1570	1
+152	1571	2
+152	1572	3
+152	1573	4
+152	1574	5
+152	1575	6
+153	1570	1
+153	1571	2
+153	1572	3
+153	1573	4
+153	1574	5
+153	1575	6
+154	1570	1
+154	1571	2
+154	1572	3
+154	1573	4
+154	1574	5
+154	1575	6
+155	21	1
+155	57	2
+156	161	1
+156	162	2
+156	163	3
+156	164	4
+156	165	5
+156	166	6
+156	167	7
+156	168	8
+156	169	9
+156	170	10
+156	171	11
+156	172	12
+157	173	1
+157	174	2
+157	175	3
+158	176	1
+158	177	2
+158	178	3
+159	179	1
+159	180	2
+159	181	3
+159	182	4
+159	183	5
+159	184	6
+159	185	7
+160	186	1
+160	187	2
+160	21	3
+161	21	1
+161	57	2
 \.
 

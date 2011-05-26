@@ -3,11 +3,12 @@ drop table if exists answers cascade;
 
 create table answers (
 	id	integer		not null,
-	tag	varchar(10)	not null unique,
+	tag	varchar(10)	not null,
 	text	text,
 	short	text,
 	value	integer,
-	primary key (id)
+	primary key (id),
+	unique (tag)
 );
 
 copy answers (id, tag) from stdin;
@@ -158,6 +159,61 @@ copy answers (id, tag) from stdin;
 137	a137
 138	a138
 139	a139
+140	a140
+141	a141
+142	a142
+143	a143
+144	a144
+145	a145
+146	a146
+147	a147
+148	a148
+149	a149
+150	a150
+151	a151
+152	a152
+153	a153
+154	a154
+155	a155
+156	a156
+1570	a1570
+1571	a1571
+1572	a1572
+1573	a1573
+1574	a1574
+1575	a1575
+1581	a1581
+1582	a1582
+1583	a1583
+1584	a1584
+1585	a1585
+161	a161
+162	a162
+163	a163
+164	a164
+165	a165
+166	a166
+167	a167
+168	a168
+169	a169
+170	a170
+171	a171
+172	a172
+173	a173
+174	a174
+175	a175
+176	a176
+177	a177
+178	a178
+179	a179
+180	a180
+181	a181
+182	a182
+183	a183
+184	a184
+185	a185
+186	a186
+187	a187
 188	a188
 189	a189
 190	a190
