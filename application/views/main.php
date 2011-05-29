@@ -7,7 +7,7 @@ $config['per_page'] = $per_page;
 $CI->pagination->initialize($config);
 ?>
 
-<?php $this->load->view('header', array('title' => 'Dalico :: Main')); ?>
+<?php $this->load->view('header', array('userdata' => $userdata['userdata'])); ?>
 
 <div class='pagination'>
 <?php echo $CI->pagination->create_links(); ?>
@@ -20,9 +20,9 @@ $CI->pagination->initialize($config);
 <th>Dalby&nbsp;1</th>
 <!--th>Dalby&nbsp;2</th-->
 <!--th>Dalby&nbsp;3</th-->
-<th>CRF</th>
-<th>IVP</th>
-<th>6WT</th>
+<th>Case Report Form</th>
+<th>Interventionsprotokoll</th>
+<th>6-Minute Walk Test</th>
 </tr>
 <?php
 $blink = 0;

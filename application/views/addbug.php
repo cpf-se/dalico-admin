@@ -1,4 +1,4 @@
-<?php $this->load->view('header'); ?>
+<?php $this->load->view('header', array('userdata' => $userdata['userdata'])); ?>
 
 <h1>Rapportera bugg</h1>
 

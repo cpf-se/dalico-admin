@@ -14,6 +14,7 @@ class Crf extends CI_Controller {
 			redirect('/');
 		} else {
 			$this->load->model('CrfModel');
+			$this->load->model('UserDataModel');
 			$this->load->library('form_validation');
 			$this->form_validation->set_rules('length', 'Längd', 'numeric');
 			$this->form_validation->set_rules('weight', 'Vikt', 'numeric');
@@ -50,9 +51,12 @@ class Crf extends CI_Controller {
 			if (!$crf) {
 				$submit = $this->input->post('submit');
 				if (!$submit) {
-					$this->load->view('crfform', $this->init_new_crf($token));
+					$newcrf = $this->init_new_crf($token);
+					$newcrf['userdata'] = $this->UserDataModel->get_user_data($this->tank_auth->get_user_id());
+					$this->load->view('crfform', $newcrf);
 				} else if ($submit === 'Spara') {
 					if ($this->form_validation->run() == FALSE) {
+						$crf['userdata'] = $this->UserDataModel->get_user_data($this->tank_auth->get_user_id());
 						$this->load->view('crfform', $crf);
 					} else {
 						$this->CrfModel->save($this->tank_auth->get_user_id());
@@ -62,6 +66,7 @@ class Crf extends CI_Controller {
 					die("FATAL: Illegal logic");
 				}
 			} else if ($this->form_validation->run() == FALSE) {
+				$crf['userdata'] = $this->UserDataModel->get_user_data($this->tank_auth->get_user_id());
 				$this->load->view('crfform', $crf);
 			} else {
 				$this->CrfModel->update($this->tank_auth->get_user_id(), $crf);

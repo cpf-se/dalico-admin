@@ -1,4 +1,4 @@
-<?php $this->load->view('header'); ?>
+<?php $this->load->view('header', array('userdata' => $userdata['userdata'])); ?>
 
 <p>Nedan dokumenteras brister i detta system <em>som är kända</em>. Dessa 
 	behöver alltså inte rapporteras. Du kan lita på att

@@ -5,6 +5,19 @@ body {
 	margin: 2em;
 }
 
+div#head {
+	color: inherit;
+	position: relative;
+}
+
+div#topright {
+	font-size: small;
+	position: relative;
+	bottom: 70px;
+	right: 5px;
+	padding-left: 650px;
+}
+
 tt {
 	font-family: Courier;
 	font-size: 108%;
