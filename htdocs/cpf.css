@@ -1,0 +1,78 @@
+
+body {
+	font-family: "Helvetica Neue",Helvetica,Arial,Verdana,Geneva,sans-serif;
+	font-size: 108%;
+	margin: 2em;
+}
+
+tt {
+	font-family: Courier;
+	font-size: 108%;
+}
+
+tr.light {
+	background-color: #ddf;
+}
+
+tr.dark {
+	background-color: #cce;
+}
+
+tr.grey {
+	background-color: #ccc;
+	border-bottom: 3pt solid #444;
+}
+
+th {
+	font-weight: normal;
+	padding: 1ex;
+}
+
+td {
+	font-weight: normal;
+}
+
+td.frame {
+	border: 1pt solid black;
+	padding: 1ex;
+	vertical-align: top;
+}
+
+td.frameright {
+	border: 1pt solid black;
+	border-right: 3pt solid black;
+	padding: 1ex;
+	vertical-align: top;
+}
+
+td.frameleft {
+	border: 1pt solid black;
+	border-left: 3pt solid black;
+	padding: 1ex;
+	vertical-align: top;
+}
+
+td.frameleftright {
+	border: 1pt solid black;
+	border-left: 3pt solid black;
+	border-right: 3pt solid black;
+	padding: 1ex;
+	vertical-align: top;
+}
+
+a:link {
+	color: #00f;
+}
+
+a:visited {
+	color: #00f;
+}
+
+a:hover {
+	background-color: yellow;
+}
+
+.pagination {
+	background-color: #ada;
+}
+
