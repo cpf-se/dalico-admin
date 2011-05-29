@@ -37,6 +37,8 @@ $f_bts24 = array('name' => 'bts24', 'id' => 'bts24', 'style' => 'text-align: rig
 $f_btd24 = array('name' => 'bts24', 'id' => 'bts24', 'style' => 'text-align: right', 'value' => $bts24, 'size' => 10);
 $f_serum = array('name' => 'serum', 'id' => 'serum', 'style' => 'text-align: left', 'value' => $serum, 'size' => 10);
 $f_plasma = array('name' => 'plasma', 'id' => 'plasma', 'style' => 'text-align: left', 'value' => $plasma, 'size' => 10);
+
+$f_hidden = array('patient' => $patient, 'date' => $date);
 ?>
 
 <?php echo form_open("crf/edit/$patient"); ?>
@@ -91,6 +93,7 @@ $f_plasma = array('name' => 'plasma', 'id' => 'plasma', 'style' => 'text-align: 
 </table>
 
 <p>
+<?php echo form_hidden($f_hidden);?>
 <?php echo form_reset('reset', 'Ångra');?>
 <?php echo form_submit('submit', 'Spara');?>
 </p>

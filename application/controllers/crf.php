@@ -7,9 +7,6 @@ class Crf extends CI_Controller {
 		$this->load->library('tank_auth');
 	}
 
-	function index($token = 0) {
-	}
-
 	function edit($token = 0, $date = 0) {
 		if (!$this->tank_auth->is_logged_in()) {
 			redirect('/auth/login/');
@@ -39,19 +36,77 @@ class Crf extends CI_Controller {
 			$this->form_validation->set_rules('bts', 'BTS', 'numeric');
 			$this->form_validation->set_rules('btd', 'BTD', 'numeric');
 			$this->form_validation->set_rules('pulse', 'Puls', 'numeric');
+			$this->form_validation->set_rules('bts24day', 'BTS (MV Dag)', 'numeric');
+			$this->form_validation->set_rules('btd24day', 'BTD (MV Dag)', 'numeric');
+			$this->form_validation->set_rules('bts24night', 'BTS (MV Natt)', 'numeric');
+			$this->form_validation->set_rules('btd24night', 'BTD (MV Natt)', 'numeric');
+			$this->form_validation->set_rules('bts24', 'BTS (MV Dygn)', 'numeric');
+			$this->form_validation->set_rules('btd24', 'BTD (MV Dygn)', 'numeric');
+			$this->form_validation->set_rules('serum', 'Serum', 'callback_tube_check');
+			$this->form_validation->set_rules('plasma', 'Plasma', 'callback_tube_check');
 
 			$crf = $this->CrfModel->active_crf($token);
 
 			if (!$crf) {
-				$this->load->view('crfform', array('patient' => $token, 'date' => date('Y-m-d')));
+				$submit = $this->input->post('submit');
+				if (!$submit) {
+					$this->load->view('crfform', $this->init_new_crf($token));
+				} else if ($submit === 'Spara') {
+					if ($this->form_validation->run() == FALSE) {
+						$this->load->view('crfform', $crf);
+					} else {
+						$this->CrfModel->save($this->tank_auth->get_user_id());
+						redirect('main');
+					}
+				} else {
+					die("FATAL: Illegal logic");
+				}
 			} else if ($this->form_validation->run() == FALSE) {
 				$this->load->view('crfform', $crf);
 			} else {
-				echo "<pre>VALIDERAR</pre>";
-				echo "<pre>"; var_dump($crf); echo "</pre>";
-				echo "<pre>"; var_dump($_POST); echo "</pre>";
+				$this->CrfModel->update($this->tank_auth->get_user_id(), $crf);
+				redirect('main');
 			}
 		}
+	}
+
+	function init_new_crf($token) {
+		return array(
+			'patient' => $token,
+			'date' => date('Y-m-d'),
+			'length' => '',
+			'weight' => '',
+			'waist' => '',
+			'hip' => '',
+			'bhb' => '',
+			'fpglukos' => '',
+			'bhba1c' => '',
+			'pnatrium' => '',
+			'pkalium' => '',
+			'pkreatinin' => '',
+			'pkolesterol' => '',
+			'pldlkolesterol' => '',
+			'phdlkolesterol' => '',
+			'fptriglycerider' => '',
+			'ptsh' => '',
+			'pft4' => '',
+			'pcrp' => '',
+			'ualbumin' => '',
+			'bts' => '',
+			'btd' => '',
+			'pulse' => '',
+			'bts24day' => '',
+			'btd24day' => '',
+			'bts24night' => '',
+			'btd24night' => '',
+			'bts24' => '',
+			'btd24' => '',
+			'serum' => '',
+			'plasma' => '');
+	}
+
+	function tube_check($str) {
+		return TRUE;
 	}
 }
 
