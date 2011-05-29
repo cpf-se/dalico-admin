@@ -58,5 +58,12 @@ foreach ($patients as $pat) {
 <?php echo $CI->pagination->create_links(); ?>
 </div>
 
+<hr />
+
+<address>
+DALICO-admin v0.99<br />
+&copy;&nbsp;2011,&nbsp;<a href="mailto:Christian.LD.Andersson@gmail.com">Christian Andersson</a>
+</address>
+
 <?php $this->load->view('footer'); ?>
 
