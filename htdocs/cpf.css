@@ -60,6 +60,14 @@ td.frameleftright {
 	vertical-align: top;
 }
 
+div.bugeven {
+	background-color: #ccc;
+}
+
+div.bugodd {
+	background-color: #eee;
+}
+
 a:link {
 	color: #00f;
 }
