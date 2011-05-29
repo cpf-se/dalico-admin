@@ -16,9 +16,8 @@ wwwfiles	= $(application)/cache $(application)/logs $(htdocs)/captcha
 
 all:
 
-deploy: $(srcdir) $(dbdir)
+deploy: $(srcdir)
 	$(MAKE) -C $(srcdir) $@
-	$(MAKE) -C $(dbdir) $@
 	$(MAKE) perms
 
 perms:
