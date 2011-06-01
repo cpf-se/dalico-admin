@@ -5,7 +5,6 @@ class Ivp extends CI_Controller {
 	function __construct() {
 		parent::__construct();
 		$this->load->library('tank_auth');
-		$this->load->library('UserDataModel');
 	}
 
 	function edit($token = -1, $date = -1) {
@@ -19,25 +18,27 @@ class Ivp extends CI_Controller {
 			redirect('/auth/login/');
 		} else if (is_numeric($token) || strlen($token) < 7) {	// ogiltig $token
 			redirect('/');
-		} else if (preg_match('^\d{4}(-\d{2}){2}$', $date)) {	// giltigt $date, datumlänk
+		} else if (preg_match('/^\d{4}(-\d{2}){2}$/', $date)) {	// giltigt $date, datumlänk
 			if ($date === date('Y-m-d')) {			// idag, aktivt formulär
 				$this->load->model('IvpModel');
-				$this->IvpModel->load($token, $date);
+				$ivp = $this->IvpModel->load($token, $date);
+				$this->load->view('ivpform', $ivp);
 			} else if ($date < date('Y-m-d')) {		// historisk, dirigera till PDF
-				redirect("/pdf/ipv_$token_$date.pdf";
+				redirect("/pdf/ipv_$token_$date.pdf");
 			} else {					// back to the future
 				die("Failed searching for future IVP");
 			}
-		} else if (isset($this->input->post('submit'))) {	// från submit
+		} else if ($submit = $this->input->post('submit')) {	// från submit
 			$this->load->library('form_validation');
 			$this->form_validation->set_rules('occasion', 'Besökstillfälle', 'numeric');
 			$this->form_validation->set_rules('dialogue', 'FaR-samtal', 'numeric');
 			$this->form_validation->set_rules('iv_minutes', 'Tidsåtgång FaR-samtal', 'numeric');
 
 			if ($this->form_validation->run() == FALSE) {
-				$ivp['userdata'] = $this->UserDataModel->get_user_data($this->tank_auth->get_user_id());
+				$ivp['invalid'] = 1;
 				$this->load->view('ivpform', $ivp);
 			} else {
+				echo "<pre>"; var_dump($_POST); echo "</pre>";
 				$this->load->model('IvpModel');
 				$patient = $this->input->post('patient');
 				$date = $this->input->post('date');
@@ -48,10 +49,12 @@ class Ivp extends CI_Controller {
 				} else {
 					$this->IvpModel->update($old_ivp);
 				}
-				redirect('main');
+				//redirect('main');
 			}
 		} else {
-			die('Undefined branch');
+			$this->load->model('IvpModel');
+			$new_ivp = $this->IvpModel->init($token, date('Y-m-d'));
+			$this->load->view('ivpform', $new_ivp);
 		}
 	}
 }

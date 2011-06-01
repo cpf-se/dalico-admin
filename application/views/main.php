@@ -7,7 +7,7 @@ $config['per_page'] = $per_page;
 $CI->pagination->initialize($config);
 ?>
 
-<?php $this->load->view('header', array('userdata' => $userdata['userdata'])); ?>
+<?php $this->load->view('header'); ?>
 
 <div class='pagination'>
 <?php echo $CI->pagination->create_links(); ?>

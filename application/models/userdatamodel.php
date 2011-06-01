@@ -16,7 +16,7 @@ class UserDataModel extends CI_Model {
 			->limit(1)
 			->get();
 
-		return array('userdata' => $userdata->row_array());
+		return $userdata->row_array();
 	}
 }
 
