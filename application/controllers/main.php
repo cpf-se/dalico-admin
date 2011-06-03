@@ -6,6 +6,7 @@ class Main extends CI_Controller {
 	function __construct() {
 		parent::__construct();
 		$this->load->library('tank_auth');
+		$this->load->helper('document_helper');
 	}
 
 	function index($offset = 0) {
@@ -22,9 +23,6 @@ class Main extends CI_Controller {
 			$data = $this->MainModel->get_all_patients($offset, self::ITEMS_PER_PAGE);
 			$data['per_page'] = self::ITEMS_PER_PAGE;
 			$data['userdata'] = $this->UserDataModel->get_user_data($this->tank_auth->get_user_id());
-
-			//echo "<pre>"; var_dump($data); echo "</pre>";
-			//die();
 
 			$this->load->view('main', $data);
 		}

@@ -18,37 +18,31 @@ $CI->pagination->initialize($config);
 <th>Behörighetskod</th>
 <th>ID-lista</th>
 <th>Dalby&nbsp;1</th>
+<th>Dalby&nbsp;2</th>
+<th>Dalby&nbsp;3</th>
 <th>Case Report Form</th>
 <th>Interventionsprotokoll</th>
+<th>6-minuters gångtest</th>
 </tr>
 <?php
 $blink = 0;
 foreach ($patients as $pat) {
 ?>
 	<tr class="<?php echo (($blink++ % 2 == 0) ? 'light' : 'dark'); ?>">
-
 	<td class="frame"><tt><b><?=$pat['token']?></b></tt></td>
-
 	<td class="frameright"><small><?=$pat['list']?> (<?=$pat['vc']?>)</small></td>
-
-	<td class="frameleftright"><?php
+	<td class="frameleft"><?php
 	if ($pat['vc'] == 'Dalby') {
 		echo "\t\t<a href='/pdf.pdf'>" . date('Y-m-d', strtotime($pat['dalby1'])) . "</a>";
 	} else {
 		echo "\t\t" . date('Y-m-d', strtotime($pat['dalby1']));
 	}
 ?></td>
-
-	<td class="frameleft"><?php
-	$token = $pat['token'];
-	echo "<a href='/crf/edit/$token'>Ny</a>";
-	foreach ($pat['crfs'] as $crf) {
-		$d = $crf['date'];
-		echo "<br /><a href='/crf/edit/$token/$d'>$d</a>";
-	}
-?></td>
-
-	<td class="frame"><tt>---</tt></td>
+	<td class="frame">---</td>
+	<td class="frameright">---</td>
+	<td class="frameleft"><?php echo list_documents_by_date($pat['token'], 'crf');?></td>
+	<td class="frame"><?php	echo list_documents_by_date($pat['token'], 'ivp');?></td>
+	<td class="frame"><?php echo list_documents_by_date($pat['token'], 'wtp');?></td>
 </tr>
 <?php } ?>
 </table>
