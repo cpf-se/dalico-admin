@@ -7,6 +7,8 @@ function list_documents_by_date($patient, $doctype)
 		'ivp' => array('table' => 'ivps'),
 		'wtp' => array('table' => 'wtps'));
 
+	if ($doctype === 'wtp') return '---';		// <<< XXX: TEMPORARY
+
 	$CI =& get_instance();
 
 	$today = date('Y-m-d');
@@ -23,7 +25,10 @@ function list_documents_by_date($patient, $doctype)
 
 	if ($active->num_rows() > 0) {
 		$doc = $active->row_array();
-		$html .= "<a href='/$doctype/edit/" . $doc['patient'] . "/" . $doc['date'] . "'>" . $doc['date'] . "</a>";
+		$html .= "<a href='/$doctype/edit/"
+			. $doc['patient'] . "/"
+			. $doc['date'] . "'>"
+			. $doc['date'] . "</a>";
 	} else {
 		$html .= "<a href='/$doctype/edit/$patient'>Ny</a>";
 	}
@@ -33,16 +38,25 @@ function list_documents_by_date($patient, $doctype)
 		->from($docs[$doctype]['table'])
 		->where('patient', $patient)
 		->where('date <', $today)
-		//->where('pdf IS NOT NULL')
+		->where('pdf IS NOT NULL')
+		->order_by('date', 'desc')
 		->get();
 
 	foreach ($historic->result_array() as $doc) {
-		$html .= "<br />\n<small><img src='/pdf.png' alt='PDF icon' />&nbsp;<a href='/$doctype/pdf/" . $doc['patient'] . "/" . $doc['date'] . "'>" . $doc['date'] . "</a></small>";
+		$html .= "<br />\n<small><img src='/pdf.png' alt='PDF icon' />&nbsp;";
+		$html .= "<a href='/$doctype/pdf/"
+			. $doc['patient'] . "/"
+			. $doc['date'] . "'>"
+			. $doc['date'] . "</a></small>";
 	}
 
 	return $html;
 }
 
+function list_surveys_by_date($patient, $survey)
+{
+	return "---";
+}
 
 ?>
 
