@@ -1,4 +1,4 @@
-<?php $this->load->view('header', array('userdata' => $userdata['userdata'])); ?>
+<?php $this->load->view('header');?>
 
 <h1>Case Report Form</h1>
 <?php
