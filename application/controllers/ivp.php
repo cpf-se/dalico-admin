@@ -22,6 +22,7 @@ class Ivp extends CI_Controller {
 			if ($date === date('Y-m-d')) {			// idag, aktivt formulär
 				$this->load->model('IvpModel');
 				$ivp = $this->IvpModel->load($token, $date);
+				//echo "<pre>"; var_dump($ivp); echo "</pre>"; die();
 				$this->load->view('ivpform', $ivp);
 			} else if ($date < date('Y-m-d')) {		// historisk, dirigera till PDF
 				redirect("/pdf/ipv_$token_$date.pdf");
@@ -33,27 +34,38 @@ class Ivp extends CI_Controller {
 			$this->form_validation->set_rules('occasion', 'Besökstillfälle', 'numeric');
 			$this->form_validation->set_rules('dialogue', 'FaR-samtal', 'numeric');
 			$this->form_validation->set_rules('iv_minutes', 'Tidsåtgång FaR-samtal', 'numeric');
+			$this->form_validation->set_rules('professions[nurse]', 'Tidsåtgång sjuksköterska', 'numeric');
+			$this->form_validation->set_rules('professions[doctor]', 'Tidsåtgång läkare', 'numeric');
+			$this->form_validation->set_rules('professions[physiotherapist]', 'Tidsåtgång sjukgymnast', 'numeric');
+			$this->form_validation->set_rules('professions[psycologist]', 'Tidsåtgång psykolog', 'numeric');
+			$this->form_validation->set_rules('professions[occupationaltherapist]', 'Tidsåtgång arbetsterapeut', 'numeric');
 
 			if ($this->form_validation->run() == FALSE) {
-				$ivp['invalid'] = 1;
+				$this->load->model('IvpModel');
+				$ivp = $this->IvpModel->init_from_post();
+				//echo "<pre>"; var_dump($ivp); echo "</pre>"; //die();
 				$this->load->view('ivpform', $ivp);
 			} else {
-				echo "<pre>"; var_dump($_POST); echo "</pre>";
+				//echo "<pre>"; var_dump($this->input->post()); echo "</pre>"; die();
 				$this->load->model('IvpModel');
 				$patient = $this->input->post('patient');
 				$date = $this->input->post('date');
 				$old_ivp = $this->IvpModel->load($patient, $date);
 
 				if (!$old_ivp) {
+					//echo "<pre>"; var_dump($this->input->post()); echo "</pre>"; die();
 					$this->IvpModel->save();
 				} else {
+					echo "<pre>"; var_dump($old_ivp); echo "</pre>\n";
+					echo "<pre>"; var_dump($this->input->post()); echo "</pre>\n"; die();
 					$this->IvpModel->update($old_ivp);
 				}
-				//redirect('main');
+				redirect('/');
 			}
 		} else {
 			$this->load->model('IvpModel');
 			$new_ivp = $this->IvpModel->init($token, date('Y-m-d'));
+			//echo "<pre>"; var_dump($new_ivp); echo "</pre>\n"; die();
 			$this->load->view('ivpform', $new_ivp);
 		}
 	}
