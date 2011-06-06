@@ -156,9 +156,10 @@ foreach ($f_measures as $m) {
 </table>
 
 <h2>Yrkeskategori</h2>
-<p>Utelämnat värde är likvärdigt med 0. Om två personer av samma yrkeskategori 
-(eller fler) är verksamma under samma dag får en person (eller fler) addera 
-till föregående angivelse.</p>
+<!--div class='info'><p>Alla fem fälten måste fyllas i, eventuellt med en nolla. Det 
+är en bugg, som kommer att rätas till så snart som möjligt. Utelämnat värde
+ska såklart snarare vara likvärdigt med 0.</p></div-->
+<p>Utelämnat värde är likvärdigt med 0.</p>
 <table>
 <?php
 foreach ($f_professions as $p) {

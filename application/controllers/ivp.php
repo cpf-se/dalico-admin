@@ -7,6 +7,14 @@ class Ivp extends CI_Controller {
 		$this->load->library('tank_auth');
 	}
 
+	function empty_or_numeric($str) {
+		if (!empty($str) && !is_numeric($str)) {
+			$this->form_validation->set_message('empty_or_numeric', 'Fältet %s får bara innehålla siffror.');
+			return FALSE;
+		}
+		return TRUE;
+	}
+
 	function edit($token = -1, $date = -1) {
 		//
 		// Vägar in hit:
@@ -30,15 +38,21 @@ class Ivp extends CI_Controller {
 				die("Failed searching for future IVP");
 			}
 		} else if ($submit = $this->input->post('submit')) {	// från submit
+			//echo '<pre>'; var_dump($this->input->post()); echo '</pre>'; die();
 			$this->load->library('form_validation');
 			$this->form_validation->set_rules('occasion', 'Besökstillfälle', 'numeric');
 			$this->form_validation->set_rules('dialogue', 'FaR-samtal', 'numeric');
 			$this->form_validation->set_rules('iv_minutes', 'Tidsåtgång FaR-samtal', 'numeric');
-			$this->form_validation->set_rules('professions[nurse]', 'Tidsåtgång sjuksköterska', 'numeric');
-			$this->form_validation->set_rules('professions[doctor]', 'Tidsåtgång läkare', 'numeric');
-			$this->form_validation->set_rules('professions[physiotherapist]', 'Tidsåtgång sjukgymnast', 'numeric');
-			$this->form_validation->set_rules('professions[psycologist]', 'Tidsåtgång psykolog', 'numeric');
-			$this->form_validation->set_rules('professions[occupationaltherapist]', 'Tidsåtgång arbetsterapeut', 'numeric');
+			$this->form_validation->set_rules('professions[nurse]', 'Tidsåtgång sjuksköterska', 'callback_empty_or_numeric');
+			$this->form_validation->set_rules('professions[doctor]', 'Tidsåtgång läkare', 'callback_empty_or_numeric');
+			$this->form_validation->set_rules('professions[physiotherapist]', 'Tidsåtgång sjukgymnast', 'callback_empty_or_numeric');
+			$this->form_validation->set_rules('professions[psycologist]', 'Tidsåtgång psykolog', 'callback_empty_or_numeric');
+			$this->form_validation->set_rules('professions[occupationaltherapist]', 'Tidsåtgång arbetsterapeut', 'callback_empty_or_numeric');
+
+			$this->form_validation->set_error_delimiters("<div class='error'>", "</div>");
+
+			$this->form_validation->set_message('numeric', 'Fältet %s får bara innehålla siffror.');
+			$this->form_validation->set_message('required', '%s måste anges.');
 
 			if ($this->form_validation->run() == FALSE) {
 				$this->load->model('IvpModel');
@@ -56,8 +70,8 @@ class Ivp extends CI_Controller {
 					//echo "<pre>"; var_dump($this->input->post()); echo "</pre>"; die();
 					$this->IvpModel->save();
 				} else {
-					echo "<pre>"; var_dump($old_ivp); echo "</pre>\n";
-					echo "<pre>"; var_dump($this->input->post()); echo "</pre>\n"; die();
+					//echo "<pre>"; var_dump($old_ivp); echo "</pre>\n";
+					//echo "<pre>"; var_dump($this->input->post()); echo "</pre>\n"; die();
 					$this->IvpModel->update($old_ivp);
 				}
 				redirect('/');

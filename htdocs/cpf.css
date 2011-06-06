@@ -18,6 +18,25 @@ div#topright {
 	padding-left: 650px;
 }
 
+div.error {
+	font-family: Courier;
+	font-size: small;
+	font-weight: bold;
+	margin-right: 50%;
+	border: 1pt solid red;
+	padding-left: 1ex;
+	padding-right: 1ex;
+	color: red;
+}
+
+div.info {
+	font-family: Courier;
+	font-size: small;
+	font-weight: bold;
+	margin-right: 50%;
+	color: blue;
+}
+
 tt {
 	font-family: Courier;
 	font-size: 108%;
