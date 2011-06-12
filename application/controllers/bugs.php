@@ -12,9 +12,7 @@ class Bugs extends CI_Controller {
 			redirect('/auth/login/');
 		} else {
 			$this->load->model('BugsModel');
-			$this->load->model('UserDataModel');
 			$data = $this->BugsModel->get_all_bugs();
-			$data['userdata'] = $this->UserDataModel->get_user_data($this->tank_auth->get_user_id());
 			$this->load->view('bugs', $data);
 		}
 	}
@@ -24,7 +22,6 @@ class Bugs extends CI_Controller {
 			redirect('/auth/login/');
 		} else {
 			$this->load->model('BugsModel');
-			$this->load->model('UserDataModel');
 			$this->load->library('form_validation');
 			$this->form_validation->set_rules('title', 'Rubrik', 'required');
 			$this->form_validation->set_rules('description', 'Detaljerad beskrivning', 'required');
