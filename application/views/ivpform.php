@@ -29,7 +29,7 @@ $f_occasion = array(
 		'size' => 3,
 		'style' => 'text-align: right',
 		'value' => $occasion),
-	'suffix' => '&nbsp;månader (Ange 0 för baseline!)');
+	'suffix' => '&nbsp;månader (Ange 0 eller lämna blank för baseline!)');
 $f_measures = array();
 $q_measures = $this->db
 	->select('name')
@@ -80,7 +80,7 @@ $f_dialogue = array(
 		'size' => 3,
 		'style' => 'text-align: right',
 		'value' => $dialogue),
-	'suffix' => '&nbsp;(Ange 0 för första FaR-samtal)');
+	'suffix' => '&nbsp;(Ange 0 eller lämna blank för första FaR-samtal)');
 $f_measure = array(
 	'label' => 'Insats',
 	'field' => array(
