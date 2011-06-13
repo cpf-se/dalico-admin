@@ -20,7 +20,7 @@ function list_documents_by_date($patient, $doctype)
 		->from($docs[$doctype]['table'])
 		->where('patient', $patient)
 		->where('date', $today)
-		->where('pdf IS NULL')
+		->where('pdf_url IS NULL')
 		->get();
 
 	if ($active->num_rows() > 0) {
@@ -38,7 +38,7 @@ function list_documents_by_date($patient, $doctype)
 		->from($docs[$doctype]['table'])
 		->where('patient', $patient)
 		->where('date <', $today)
-		->where('pdf IS NOT NULL')
+		->where('pdf_url IS NOT NULL')
 		->order_by('date', 'desc')
 		->get();
 
