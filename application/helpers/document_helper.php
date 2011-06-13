@@ -55,7 +55,42 @@ function list_documents_by_date($patient, $doctype)
 
 function list_surveys_by_date($patient, $survey)
 {
-	return "---";
+	$CI =& get_instance();
+
+	$s = $CI->db
+		->select('id')
+		->from('surveys')
+		->where('name', $survey)
+		->limit(1)
+		->get();
+
+	if ($s->num_rows() > 0) {
+		$s = $s->row_array();
+		$s = $s['id'];
+
+		$historic = $CI->db
+			->select('pdf_url')
+			->select('stamp')
+			->from('responses')
+			->where('pdf_url IS NOT NULL')
+			->where('patient', $patient)
+			->where('survey', $s)
+			->get();
+
+		$rows = array();
+		foreach ($historic->result_array() as $h) {
+			$html  = "<small><img src='/pdf.png' alt='PDF icon' />&nbsp;";
+			$html .= "<a href='" . $h['pdf_url'] . "'>" . date('Y-m-d', strtotime($h['stamp'])) . "</a></small>";
+			$rows[] = $html;
+		}
+		$html = '---';
+		if (!empty($rows)) {
+			$html = implode('<br />' . "\n", $rows);
+		}
+		return $html;
+	} else {
+		return '---';
+	}
 }
 
 ?>
