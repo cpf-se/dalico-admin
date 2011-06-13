@@ -156,9 +156,6 @@ foreach ($f_measures as $m) {
 </table>
 
 <h2>Yrkeskategori</h2>
-<!--div class='info'><p>Alla fem fälten måste fyllas i, eventuellt med en nolla. Det 
-är en bugg, som kommer att rätas till så snart som möjligt. Utelämnat värde
-ska såklart snarare vara likvärdigt med 0.</p></div-->
 <p>Utelämnat värde är likvärdigt med 0.</p>
 <table>
 <?php

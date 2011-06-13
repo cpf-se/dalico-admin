@@ -25,12 +25,21 @@ $CI->pagination->initialize($config);
 <th>6-minuters gångtest</th>
 </tr>
 <?php $blink = 0; foreach ($patients as $pat) { ?>
-	<tr class="<?php echo (($blink++ % 2 == 0) ? 'light' : 'dark'); ?>">
+<tr class="<?php
+if (isset($pat['warning'])) {
+	echo (($blink++ % 2 == 0) ? 'redlight' : 'reddark');
+} else if ($pat['vc'] == 'CPF') {
+	echo (($blink++ % 2 == 0) ? 'greenlight' : 'greendark');
+} else {
+	echo (($blink++ % 2 == 0) ? 'bluelight' : 'bluedark');
+} ?>">
 	<td class="frame"><tt><b><?=$pat['token']?></b></tt></td>
 	<td class="frameright"><small><?=$pat['list']?> (<?=$pat['vc']?>)</small></td>
+
 	<td class="frameleft"><?php  echo list_surveys_by_date($pat['token'], 'Dalby 1');?></td>
 	<td class="frame"><?php      echo list_surveys_by_date($pat['token'], 'Dalby 2');?></td>
 	<td class="frameright"><?php echo list_surveys_by_date($pat['token'], 'Dalby 3');?></td>
+
 	<td class="frameleft"><?php  echo list_documents_by_date($pat['token'], 'crf');?></td>
 	<td class="frame"><?php      echo list_documents_by_date($pat['token'], 'ivp');?></td>
 	<td class="frame"><?php      echo list_documents_by_date($pat['token'], 'wtp');?></td>
@@ -45,7 +54,7 @@ $CI->pagination->initialize($config);
 <hr />
 
 <address>
-DALICO-admin v0.99<br />
+DALICO-admin v0.95<br />
 &copy;&nbsp;2011,&nbsp;<a href="mailto:Christian.LD.Andersson@gmail.com">Christian Andersson</a>
 </address>
 

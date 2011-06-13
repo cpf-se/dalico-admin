@@ -6,7 +6,14 @@ class MainModel extends CI_Model {
 		parent::__construct();
 	}
 
-	function get_all_patients($offset, $ipp) {
+	function get_all_patients($offset, $ipp, $all = FALSE) {
+/*		$lists = $this->db
+			->select('lists.id as list')
+			->from('lists')
+			->join('idops', 'idops.id = idop', 'inner')
+			->join('vcs', 'vcs.id = idops.vc');
+*/
+
 		$total = $this->db
 			->select('responses.patient as patient')
 			->from('responses')
@@ -34,29 +41,11 @@ class MainModel extends CI_Model {
 				->get();
 			if ($prs->num_rows() > 0) {
 				foreach ($prs->result_array() as $pr) {
-					$table[$pr['patient']] = array(
+					$table[/*$pr['patient']*/] = array(
 						'token' => $pr['patient'],
 						'list' => $pr['name'] . ' ' . $pr['num'],
 						'vc' => $pr['vc'],
-						'dalby1' => $pr['dalby1'],
-						'crfs' => array());
-
-					$crs = $this->db
-						->select('crfs.id as id')
-						->select('crfs.date as date')
-						->from('crfs')
-						->where('patient', $pr['patient'])
-						->order_by('crfs.date', 'desc')
-						->get();
-					$crfs = array();
-					if ($crs->num_rows() > 0) {
-						foreach ($crs->result_array() as $crf) {
-							$crfs[] = array(
-								'id' => $crf['id'],
-								'date' => $crf['date']);
-						}
-					}
-					$table[$pr['patient']]['crfs'] = $crfs;
+						'dalby1' => $pr['dalby1']);
 				}
 			}
 			return array('total' => $total, 'patients' => $table);

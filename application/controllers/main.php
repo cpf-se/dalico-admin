@@ -1,7 +1,7 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
 
 class Main extends CI_Controller {
-	const ITEMS_PER_PAGE = 10;
+	const ITEMS_PER_PAGE = 8;
 
 	function __construct() {
 		parent::__construct();

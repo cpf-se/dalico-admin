@@ -5,6 +5,10 @@ body {
 	margin: 2em;
 }
 
+address {
+	font-size: 75%;
+}
+
 div#head {
 	color: inherit;
 	position: relative;
@@ -42,11 +46,27 @@ tt {
 	font-size: 108%;
 }
 
-tr.light {
+tr.redlight {
+	background-color: #fdd;
+}
+
+tr.reddark {
+	background-color: #ecc;
+}
+
+tr.greenlight {
+	background-color: #dfd;
+}
+
+tr.greendark {
+	background-color: #cec;
+}
+
+tr.bluelight {
 	background-color: #ddf;
 }
 
-tr.dark {
+tr.bluedark {
 	background-color: #cce;
 }
 
