@@ -201,13 +201,19 @@ class IvpModel extends CI_Model {
 			if ($cid->num_rows() > 0) {
 				$row = $cid->row_array();
 				$consultation = $row['id'];
+				if (!isset($old_ivp['consultation']) || $old_ivp['consultation'] != $consultation) {
+					$change = array('consultation' => $consultation);
+					$this->db->where('id', $ivpid);
+					$this->db->update('ivps', $change);
+					$changed = TRUE;
+				}
 			}
 		}
 
 		$changes = array();
 
-		$local_attribs = array('consultation', 'occasion', 'dialogue', 
-			'measure', 'iv_minutes', 'own', 'group', 'misc');
+		$local_attribs = array('occasion', 'dialogue', 'measure', 
+			'iv_minutes', 'own', 'group', 'misc');
 
 		foreach ($local_attribs as $la) {
 			if ($new = $this->input->post($la)) {
