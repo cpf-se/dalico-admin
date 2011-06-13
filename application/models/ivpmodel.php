@@ -6,6 +6,21 @@ class IvpModel extends CI_Model {
 		parent::__construct();
 	}
 
+	private function load_editors(&$ivp) {
+		$ivp['editors'] = array();
+		$editors = $this->db
+			->select('username')
+			->select("to_char(stamp, 'YYYY-MM-DD HH24:MI:SS') as stamp", FALSE)
+			->from('ivp_editors')
+			->join('users', 'ivp_editors.user = users.id', 'inner')
+			->where('ivp_editors.ivp', $ivp['id'])
+			->order_by('stamp', 'desc')
+			->get();
+		foreach ($editors->result_array() as $ed) {
+			$ivp['editors'][] = $ed;
+		}
+	}
+
 	function load($token, $date) {
 		$ivps = $this->db
 			->select('ivps.id as id')
@@ -27,6 +42,8 @@ class IvpModel extends CI_Model {
 			->get();
 		if ($ivps->num_rows() > 0) {
 			$ivp = $ivps->row_array(); // borde bli en och endast en
+
+			$this->load_editors($ivp);
 
 			$ivp['measures'] = array();
 			$measures = $this->db
@@ -85,11 +102,10 @@ class IvpModel extends CI_Model {
 
 	function init_from_post() {
 		$ivp = array();
-		if ($P = $this->input->post()) {
-			foreach ($this->input->post() as $key => $value) {
-				$ivp[$key] = $value;
-			}
+		foreach ($this->input->post() as $key => $value) {
+			$ivp[$key] = $value;
 		}
+		$this->load_editors($ivp);
 		return $ivp;
 	}
 

@@ -18,7 +18,7 @@ class Crf extends CI_Controller {
 				$crf = $this->CrfModel->load($token, $date);
 				$this->load->view('crfform', $crf);
 			} else if ($date < date('Y-m-d')) {
-				redirect("/pdf/$token" . '_ivp_' . "$date.pdf");
+				redirect("/pdf/$token" . '_crf_' . "$date.pdf");
 			} else {
 				die('Failed searching for future CRF');
 			}

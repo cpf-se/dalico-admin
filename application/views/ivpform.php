@@ -193,11 +193,19 @@ echo form_textarea($f_misc['field']);
 
 <?php
 echo '<p>' . form_reset('reset', 'Ångra') . form_submit('submit', 'Spara') . '</p>';
+echo form_close();
 ?>
 
+<?php if (!empty($editors)) { ?>
+<div class='grey'>
+<h2>Historik</h2>
+<ul>
 <?php
-// List of editors
+foreach ($editors as $ed) {
+	echo '<li>' . $ed['stamp'] . ' (<b>' . $ed['username'] . '</b>)</li>' . "\n";
+}}
 ?>
+</ul></div>
 
 <?php $this->load->view('footer');?>
 

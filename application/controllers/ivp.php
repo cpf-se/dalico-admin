@@ -33,7 +33,7 @@ class Ivp extends CI_Controller {
 				//echo "<pre>"; var_dump($ivp); echo "</pre>"; die();
 				$this->load->view('ivpform', $ivp);
 			} else if ($date < date('Y-m-d')) {		// historisk, dirigera till PDF
-				redirect("/pdf/ipv_$token_$date.pdf");
+				redirect("/pdf/$token" . '_ivp_' . "$date.pdf");
 			} else {					// back to the future
 				die("Failed searching for future IVP");
 			}
