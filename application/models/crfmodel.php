@@ -56,6 +56,7 @@ class CrfModel extends CI_Model {
 			'phdlkolesterol'	=> '',
 			'fptriglycerider'	=> '',
 			'ptsh'			=> '',
+			'pft4'			=> '',
 			'pcrp'			=> '',
 			'ualbumin'		=> '',
 			'bts'			=> '',
