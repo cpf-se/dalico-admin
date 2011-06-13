@@ -195,5 +195,9 @@ echo form_textarea($f_misc['field']);
 echo '<p>' . form_reset('reset', 'Ångra') . form_submit('submit', 'Spara') . '</p>';
 ?>
 
+<?php
+// List of editors
+?>
+
 <?php $this->load->view('footer');?>
 
