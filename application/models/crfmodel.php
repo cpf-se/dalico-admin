@@ -141,7 +141,7 @@ class CrfModel extends CI_Model {
 		}
 
 		$edtr = array(
-			'user' => $userid,
+			'user' => $this->tank_auth->get_user_id(),
 			'crf' => $crfid);
 
 		$this->db->insert('crf_editors', $edtr);
