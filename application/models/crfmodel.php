@@ -8,16 +8,18 @@ class CrfModel extends CI_Model {
 
 	private function load_editors(&$crf) {
 		$crf['editors'] = array();
-		$editors = $this->db
-			->select('username')
-			->select("to_char(stamp, 'YYYY-MM-DD HH24:MI:SS') as stamp", FALSE)
-			->from('crf_editors')
-			->join('users', 'crf_editors.user = users.id', 'inner')
-			->where('crf_editors.crf', $crf['id'])
-			->order_by('stamp', 'desc')
-			->get();
-		foreach ($editors->result_array() as $ed) {
-			$crf['editors'][] = $ed;
+		if (isset($crf['id'])) {
+			$editors = $this->db
+				->select('username')
+				->select("to_char(stamp, 'YYYY-MM-DD HH24:MI:SS') as stamp", FALSE)
+				->from('crf_editors')
+				->join('users', 'crf_editors.user = users.id', 'inner')
+				->where('crf_editors.crf', $crf['id'])
+				->order_by('stamp', 'desc')
+				->get();
+			foreach ($editors->result_array() as $ed) {
+				$crf['editors'][] = $ed;
+			}
 		}
 	}
 
