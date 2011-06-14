@@ -51,6 +51,8 @@ class MainModel extends CI_Model {
 					$prs = $this->db
 						->select('responses.patient as patient')
 						->select('responses.stamp as dalby1')
+						->select('patients.warning as warning')
+						->select('patients.sex as sex')
 						->select('lists.num as num')
 						->select('idops.name as name')
 						->select('vcs.name as vc')
@@ -69,6 +71,8 @@ class MainModel extends CI_Model {
 					foreach ($prs->result_array() as $pr) {
 						$table[] = array(
 							'token' => $pr['patient'],
+							'warning' => $pr['warning'],
+							'sex' => $pr['sex'],
 							'list' => $pr['name'] . ' ' . $pr['num'],
 							'vc' => $pr['vc'],
 							'dalby1' => $pr['dalby1']);
