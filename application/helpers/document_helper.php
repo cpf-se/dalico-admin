@@ -44,10 +44,11 @@ function list_documents_by_date($patient, $doctype)
 
 	foreach ($historic->result_array() as $doc) {
 		$html .= "<br />\n<small><img src='/pdf.png' alt='PDF icon' />&nbsp;";
-		$html .= "<a href='/$doctype/pdf/"
-			. $doc['patient'] . "/"
-			. $doc['date'] . "'>"
-			. $doc['date'] . "</a></small>";
+		//	$html .= "<a href='/$doctype/pdf/"
+		//		. $doc['patient'] . "/"
+		//		. $doc['date'] . "'>"
+		//		. $doc['date'] . "</a></small>";
+		$html .= "<a href='" . $doc['pdf_url'] . "'>" . $doc['date'] . "</a></small>";
 	}
 
 	return $html;
