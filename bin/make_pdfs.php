@@ -95,7 +95,7 @@ function heading($survey, $patient, $date, $sex = 'unknown') {
 		'\addtolength{\textwidth}{25mm}' . "\n" .
 		'\pagestyle{empty}' . "\n" .
 		'\begin{document}' . "\n" .
-		'\section*{' . $survey . ', ' . $patient . '~' . $sex . ', ' . $date . '}' . "\n";
+		'\section*{' . $survey . ', ' . $patient . '~' . (($sex == 'male') ? '\Male' : '\Female') . ', ' . $date . '}' . "\n";
 }
 
 function texbox($str) {
@@ -366,7 +366,7 @@ function common_situations(&$qa) {
 	return $str;
 }
 
-function anxiety(&$qa) {
+function anxiety(&$qa, $patient_id) {
 	$str  = '\item Ångest/oro: {\footnotesize ';
 
 	$aq = array(
@@ -409,6 +409,16 @@ function anxiety(&$qa) {
 		}
 	}
 	$str .= texbox($o) . '}' . "\n\n";
+
+	if ($a >= 15 || $o >= 15) {
+		$result = array();
+		if (_PGSQL(_UPDATE('patients', array('warning' => 'WARNING'), "token = '$patient_id'"), $result) > 0) {
+			// success
+		} else {
+			echo "Error setting WARNING flag on patient $patient_id.\n";
+		}
+	}
+
 	return $str;
 }
 
@@ -533,6 +543,7 @@ if ($q === 0) {
 	echo 'Dalby 1: nothing to do.' . "\n";
 } else foreach ($responses as $r) {
 	$RESPONSE_ID = $r['response'];
+	$PATIENT_ID = $r['patient'];
 
 	$questions_answers =
 		_SELECT(array(
@@ -561,16 +572,22 @@ if ($q === 0) {
 
 	//var_dump($QA); die();
 
-	$SEX = 'unknown';
+	$sex = 'unknown';
 	if (isset($QA['q0000'])) {
 		if ($QA['q0000'] === 'a0001') {
-			$SEX = '\Male';
+			$sex = 'male';
 		} else {
-			$SEX = '\Female';
+			$sex = 'female';
 		}
 	}
+	$result = array();
+	if (_PGSQL(_UPDATE('patients', array('sex' => $sex), "token = '$PATIENT_ID'"), $result) > 0) {
+		// success
+	} else {
+		echo "Error setting sex = '$sex' on patient $PATIENT_ID.\n";
+	}
 
-	$tex  = heading('Dalby~1', $r['patient'], date('Y-m-d', strtotime($r['stamp'])), $SEX);
+	$tex  = heading('Dalby~1', $r['patient'], date('Y-m-d', strtotime($r['stamp'])), $sex);
 
 	$tex .= '\begin{enumerate}' . "\n";
 
@@ -631,13 +648,13 @@ if ($q === 0) {
 	$tex .= tobacco($QA, $ATEXT);
 
 	// Alkohol
-	$tex .= alcohol($QA, $ATEXT, $SEX);
+	$tex .= alcohol($QA, $ATEXT, $sex);
 
 	// Vardagliga situationer
 	$tex .= common_situations($QA);
 
 	// Ångest/oro
-	$tex .= anxiety($QA);
+	$tex .= anxiety($QA, $PATIENT_ID);
 
 	// Om fysisk aktivitet och motion
 	$tex .= motivation($QA);

@@ -2,7 +2,7 @@
 
 PSQL='psql -hlocalhost -p54321 -Udalico -ddalico -Atw'
 
-PATS="SELECT patient,to_char(stamp,'YYYY-MM-DD') FROM responses WHERE tex IS NOT NULL AND pdf_url IS NULL"
+PATS="SELECT patient,to_char(stamp,'YYYY-MM-DD') FROM responses WHERE tex IS NOT NULL"
 
 pats_dates() {
 	echo $PATS | $PSQL | tr '|' '\t'
