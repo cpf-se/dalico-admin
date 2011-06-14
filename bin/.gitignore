@@ -1,3 +1,4 @@
 pg_connect_string.php
 *.tex
 *.pdf
+psql.sh

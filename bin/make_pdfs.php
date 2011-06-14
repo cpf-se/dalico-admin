@@ -674,4 +674,170 @@ if ($q === 0) {
 // CASE REPORT FORMS
 //=================================================================================================================================
 
+function crf_header($pat, $sex, $dat) {
+	$str =	  '\documentclass[a4paper,swedish,11pt]{article}' . "\n"
+		. '\usepackage[utf8]{inputenc}' . "\n"
+		. '\usepackage[T1]{fontenc}' . "\n"
+		. '\usepackage{babel}' . "\n"
+		. '\usepackage{sectsty}\allsectionsfont{\sffamily\bfseries}' . "\n"
+		. '\usepackage{url}' . "\n"
+		. '\usepackage{marvosym}' . "\n"
+		. '\usepackage{multicol}' . "\n"
+		. '\addtolength{\oddsidemargin}{-1cm}' . "\n"
+		. '\addtolength{\textwidth}{25mm}' . "\n"
+		. '\pagestyle{empty}' . "\n"
+		. '\begin{document}' . "\n"
+		. '\section*{Case~Report~Form, ' . $pat . '~' . (($sex == 'male') ? '\Male' : '\Female') . ', ' . $dat . '}' . "\n";
+	return $str;
+}
+
+function crf_top(&$r) {
+	$length = $r['length'];
+	$weight = $r['weight'];
+	$bmi = $weight * 100 * 100 / ($length * $length);
+	$str =	  '\begin{multicols}{2}\setlength{\columnseprule}{.2pt}' . "\n"
+		. '\begin{tabular}{rrl}' . "\n"
+		. "\t" . 'Längd: & \textbf{' . $length . '} & cm \\\\' . "\n"
+		. "\t" . 'Vikt: & \textbf{' . $weight . '} & kg \\\\' . "\n"
+		. "\t" . '\hline' . "\n"
+		. "\t" . 'BMI: & \textbf{' . sprintf('%2.1f', $bmi) . '} & kg/m$^2$' . "\n"
+		. '\end{tabular}' . "\n\n";
+
+	$waist = isset($r['waist']) ? $r['waist'] : '---';
+	$hip = isset($r['hip']) ? $r['hip'] : '---';
+	$wth = is_numeric($hip) && $hip != 0 ? ($waist / $hip) : '---';
+	$str .=	  '\begin{tabular}{rrl}' . "\n"
+		. "\t" . 'Midjemått: & \textbf{' . $waist . '} & cm \\\\' . "\n"
+		. "\t" . 'Höftmått: & \textbf{' . $hip . '} & cm \\\\' . "\n"
+		. "\t" . '\hline' . "\n"
+		. "\t" . 'Midja/höft: & \textbf{' . (is_numeric($wth) ? sprintf('%1.2f', $wth) : $wth) . '}' . "\n"
+		. '\end{tabular}' . "\n"
+		. '\end{multicols}' . "\n";
+
+	return $str;
+}
+
+function crf_lablist(&$r) {
+	$tables = array(
+		'first' => array(
+			'B-Hb' => array($r['bhb'], 'g/l'),
+			'fP-Glukos' => array($r['fpglukos'], 'mmol/l'),
+			'B-HbA1c' => array($r['bhba1c'], 'mmol/l'),
+			'P-Natrium' => array($r['pnatrium'], 'mmol/l'),
+			'P-Kalium' => array($r['pkalium'], 'mmol/l'),
+			'P-Kreatinin(enz)' => array($r['pkreatinin'], '$\mu$mol/l'),
+			'P-Kolesterol' => array($r['pkolesterol'], 'mmol/l'),
+			'P-LDL-Kolesterol' => array($r['pldlkolesterol'], 'mmol/l'),
+			'P-HDL-Kolesterol' => array($r['phdlkolesterol'], 'mmol/l')),
+		'second' => array(
+			'fP-Triglycerider' => array($r['fptriglycerider'], 'mmol/l'),
+			'P-TSH' => array($r['ptsh'], 'mlE/l'),
+			'P-FT4' => array($r['pft4'], 'pmol/l'),
+			'P-CRP' => array($r['pcrp'], 'mg/l'),
+			'U-Albumin/krea index' => array($r['ualbumin'], 'g/mol'),
+			'BTS' => array($r['bts'], 'mmHg'),
+			'BTD' => array($r['btd'], 'mmHg'),
+			'Puls' => array($r['pulse'], 'slag/min')));
+
+	$str = array();
+	foreach ($tables as $table) {
+		$b = '\begin{tabular}{rrl}' . "\n";
+		$rows = array();
+		foreach ($table as $label => $value) {
+			$row = array();
+			$row[] = "\t" . $label . ':';
+			foreach ($value as $v) {
+				$row[] = $v;
+			}
+			$row[1] = '\textbf{' . $row[1] . '}';
+			$rows[] = implode(' & ', $row);
+		}
+		$b .= implode(' \\\\' . "\n", $rows) . "\n" . '\end{tabular}';
+		$str[] = $b;
+	}
+
+	return	  '\begin{multicols}{2}\setlength{\columnseprule}{.2pt}' . "\n"
+		. implode("\n\n", $str) . "\n"
+		. '\end{multicols}' . "\n";
+}
+
+function crf_bp(&$r) {
+	$table = array(
+		'BT~medel dag' => array($r['bts24day'], $r['btd24day']),
+		'BT~medel natt' => array($r['bts24night'], $r['btd24night']),
+		'BT~medel dygn' => array($r['bts24'], $r['btd24']));
+
+	$rows = array();
+	foreach ($table as $label => $value) {
+		$row = array();
+		$row[] = "\t" . $label . ':';
+		$val = array();
+		foreach ($value as $v) {
+			$val[] = '\textbf{' . $v . '}';
+		}
+		$row[] = implode(' &/& ', $val);
+		$rows[] = implode(' & ', $row);
+	}
+
+	return	  '\begin{tabular}{rrcl}' . "\n"
+		. implode(' \\\\' . "\n", $rows) . "\n"
+		. '\end{tabular}' . "\n";
+}
+
+function crf_tubes(&$r) {
+	return	  '\begin{tabular}{rr}' . "\n"
+		. "\t" . 'Serum: & ' . $r['serum'] . ' \\\\' . "\n"
+		. "\t" . 'Plasma: & ' . $r['plasma'] . "\n"
+		. '\end{tabular}' . "\n";
+}
+
+function crf_history(&$r) {
+	$writes =
+		_SELECT(array('stamp', 'username'))			.
+		_FROM('crf_editors')					.
+		_JOIN('users', 'users.id = crf_editors.user', 'inner')	.
+		_WHERE('crf_editors.crf = ' . $r['id'])			.
+		_ORDERBY('stamp desc');
+	$result = array();
+	if (_PGSQL($writes, $result) > 0) {
+		$str = '\vfill' . "\n\n" . '{\footnotesize\ttfamily\begin{itemize}' . "\n";
+		foreach ($result as $res) {
+			$str .= "\t" . '\item ' . $res['stamp'] . ' (' . $res['username'] . ')' . "\n";
+		}
+		$str .= '\end{itemize}}' . "\n";
+		return $str;
+	}
+	return '';
+}
+
+$today = date('Y-m-d');
+$crfs =
+	_SELECT('*')							.
+	_FROM('crfs')							.
+	_JOIN('patients', 'patients.token = crfs.patient', 'inner')	.
+	_WHERE(_AND(array(
+		"date < '$today'",
+		'tex IS NULL')));
+$result = array();
+if (_PGSQL($crfs, $result) > 0) {
+	foreach ($result as $r) {
+		$tex  = crf_header($r['token'], $r['sex'], $r['date']);
+		$tex .= crf_top($r) . "\n";
+		$tex .= '\subsection*{Labblista}' . "\n" . crf_lablist($r) . "\n";
+		$tex .= '\subsection*{24~h blodtryck}' . "\n" . crf_bp($r) . "\n";
+		$tex .= '\subsection*{Provrör}' . "\n" . crf_tubes($r) . "\n";
+		$tex .= crf_history($r);
+		$tex .= footing(array('document'));
+
+		$res = array();
+		if (_PGSQL(_UPDATE('crfs', array('tex' => str_replace('\\', '\\\\', $tex)), 'id = ' . $r['id']), $res) > 0) {
+			echo 'Successfully converted CRF for ' . $r['patient'] . '.' . "\n";
+		} else {
+			echo 'Error converting CRF for ' . $r['patient'] . '.' . "\n";
+		}
+	}
+} else {
+	echo "CRFs: nothing to do.\n";
+}
+
 ?>
