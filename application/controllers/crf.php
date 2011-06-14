@@ -59,7 +59,7 @@ class Crf extends CI_Controller {
 			if ($this->form_validation->run() == FALSE) {
 				$this->load->model('CrfModel');
 				$crf = $this->CrfModel->init_from_post();
-				$this->load->view('crfmodel', $crf);
+				$this->load->view('crfform', $crf);
 			} else {
 				$this->load->model('CrfModel');
 				$patient = $this->input->post('patient');
