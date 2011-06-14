@@ -57,6 +57,20 @@ function list_surveys_by_date($patient, $survey)
 {
 	$CI =& get_instance();
 
+	$p = $CI->db				// Visa inte Bara-PDF
+		->select('vcs.name as vc')
+		->from('responses')
+		->join('patients', 'patients.token = responses.patient', 'inner')
+		->join('lists', 'lists.id = patients.list', 'inner')
+		->join('idops', 'idops.id = lists.idop', 'inner')
+		->join('vcs', 'vcs.id = idops.vc', 'inner')
+		->where('vcs.name', 'Bara')
+		->where('patients.token', $patient)
+		->count_all_results();
+	if ($p > 0) {
+		return '---';
+	}
+
 	$s = $CI->db
 		->select('id')
 		->from('surveys')
