@@ -17,6 +17,6 @@ $userdata = $CI->UserDataModel->get_user_data($CI->tank_auth->get_user_id());
 			<a href="/">Hem</a> -
 			<a href="/auth/logout">Logga ut</a> -
 			<a href="/auth/change_password">Byt lösenord</a> -
-			<a href="/auth/change_email">Byt emailadress</a> -
-			<a href="/bugs">Buggar</a>
+			<a href="/auth/change_email">Byt emailadress</a><!-- -
+			<a href="/bugs">Buggar</a-->
 		</div>
