@@ -8,16 +8,18 @@ class IvpModel extends CI_Model {
 
 	private function load_editors(&$ivp) {
 		$ivp['editors'] = array();
-		$editors = $this->db
-			->select('username')
-			->select("to_char(stamp, 'YYYY-MM-DD HH24:MI:SS') as stamp", FALSE)
-			->from('ivp_editors')
-			->join('users', 'ivp_editors.user = users.id', 'inner')
-			->where('ivp_editors.ivp', $ivp['id'])
-			->order_by('stamp', 'desc')
-			->get();
-		foreach ($editors->result_array() as $ed) {
-			$ivp['editors'][] = $ed;
+		if (isset($ivp['id'])) {
+			$editors = $this->db
+				->select('username')
+				->select("to_char(stamp, 'YYYY-MM-DD HH24:MI:SS') as stamp", FALSE)
+				->from('ivp_editors')
+				->join('users', 'ivp_editors.user = users.id', 'inner')
+				->where('ivp_editors.ivp', $ivp['id'])
+				->order_by('stamp', 'desc')
+				->get();
+			foreach ($editors->result_array() as $ed) {
+				$ivp['editors'][] = $ed;
+			}
 		}
 	}
 
