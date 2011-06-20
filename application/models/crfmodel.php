@@ -139,7 +139,7 @@ class CrfModel extends CI_Model {
 				$document = $document->row_array();
 				$document = $document['id'];
 			} else {
-				die('FATAL: Error in application/models/crfmodel.php, newsly created DOCUMENT not found.');
+				die('FATAL: Error in application/models/crfmodel.php, newly created DOCUMENT not found.');
 			}
 
 			$newcrf = array_filter(array(

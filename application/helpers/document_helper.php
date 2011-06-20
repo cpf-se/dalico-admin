@@ -8,7 +8,6 @@ function list_documents_by_date($patient, $doctype)
 		'wtp' => array('table' => 'wtps'));
 
 	if ($doctype === 'wtp') return '---';		// <<< XXX: TEMPORARY
-	if ($doctype === 'ivp') return '---';		// <<< XXX: TEMPORARY
 
 	$CI =& get_instance();
 

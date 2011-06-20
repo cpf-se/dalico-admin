@@ -15,30 +15,36 @@ class Ivp extends CI_Controller {
 		return TRUE;
 	}
 
+	private function _readonly() {
+		$may_write = $this->db
+			->select('*')
+			->from('users_groups')
+			->join('groups', 'users_groups.group = groups.id', 'inner')
+			->where('user', $this->tank_auth->get_user_id())
+			->where('groups.name', 'wuser')
+			->get();
+		return $may_write->num_rows() === 0;
+	}
+
 	function edit($token = -1, $date = -1) {
-		//
-		// Vägar in hit:
-		// 	- från ny-länk i main - isset($token)
-		// 	- från datumlänk i main - isset($token, $date)
-		// 	- från this via submit - isset($_POST['submit')
-		//
-		if (!$this->tank_auth->is_logged_in()) {		// inte inloggad
+		if (!$this->tank_auth->is_logged_in()) {
 			redirect('/auth/login/');
-		} else if (is_numeric($token) || strlen($token) < 7) {	// ogiltig $token
+		} else if (is_numeric($token) || strlen($token) < 7) {
 			redirect('/');
-		} else if (preg_match('/^\d{4}(-\d{2}){2}$/', $date)) {	// giltigt $date, datumlänk
-			if ($date === date('Y-m-d')) {			// idag, aktivt formulär
+		} else if (preg_match('/^\d{4}(-\d{2}){2}$/', $date)) {
+			if ($date === date('Y-m-d')) {
 				$this->load->model('IvpModel');
 				$ivp = $this->IvpModel->load($token, $date);
-				//echo "<pre>"; var_dump($ivp); echo "</pre>"; die();
+				if ($this->_readonly()) {
+					$ivp['READONLY'] = 'READONLY';
+				}
 				$this->load->view('ivpform', $ivp);
-			} else if ($date < date('Y-m-d')) {		// historisk, dirigera till PDF
+			} else if ($date < date('Y-m-d')) {
 				redirect("/pdf/$token" . '_ivp_' . "$date.pdf");
-			} else {					// back to the future
+			} else {
 				die("Failed searching for future IVP");
 			}
-		} else if ($submit = $this->input->post('submit')) {	// från submit
-			//echo '<pre>'; var_dump($this->input->post()); echo '</pre>'; die();
+		} else if ($submit = $this->input->post('submit')) {
 			$this->load->library('form_validation');
 			$this->form_validation->set_rules('occasion', 'Besökstillfälle', 'numeric');
 			$this->form_validation->set_rules('dialogue', 'FaR-samtal', 'numeric');
@@ -57,30 +63,30 @@ class Ivp extends CI_Controller {
 			if ($this->form_validation->run() == FALSE) {
 				$this->load->model('IvpModel');
 				$ivp = $this->IvpModel->init_from_post();
-				//echo "<pre>"; var_dump($ivp); echo "</pre>"; //die();
+				if ($this->_readonly()) {
+					$ivp['READONLY'] = 'READONLY';
+				}
 				$this->load->view('ivpform', $ivp);
 			} else {
-				//echo "<pre>"; var_dump($this->input->post()); echo "</pre>"; die();
 				$this->load->model('IvpModel');
 				$patient = $this->input->post('patient');
 				$date = $this->input->post('date');
-				$old_ivp = $this->IvpModel->load($patient, $date);
+				$old_ivp = $this->IvpModel->load($patient, $date, FALSE);
 
 				if (!$old_ivp) {
-					//echo "<pre>"; var_dump($this->input->post()); echo "</pre>"; die();
 					$this->IvpModel->save();
 				} else {
-					//echo "<pre>"; var_dump($old_ivp); echo "</pre>\n";
-					//echo "<pre>"; var_dump($this->input->post()); echo "</pre>\n"; die();
 					$this->IvpModel->update($old_ivp);
 				}
 				redirect('/');
 			}
 		} else {
 			$this->load->model('IvpModel');
-			$new_ivp = $this->IvpModel->init($token, date('Y-m-d'));
-			//echo "<pre>"; var_dump($new_ivp); echo "</pre>\n"; die();
-			$this->load->view('ivpform', $new_ivp);
+			$ivp = $this->IvpModel->init($token, date('Y-m-d'));
+			if ($this->_readonly()) {
+				$ivp['READONLY'] = 'READONLY';
+			}
+			$this->load->view('ivpform', $ivp);
 		}
 	}
 }

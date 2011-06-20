@@ -8,13 +8,11 @@ class IvpModel extends CI_Model {
 
 	private function load_editors(&$ivp) {
 		$ivp['editors'] = array();
-		if (isset($ivp['id'])) {
+		if (isset($ivp['document'])) {
 			$editors = $this->db
-				->select('username')
-				->select("to_char(stamp, 'YYYY-MM-DD HH24:MI:SS') as stamp", FALSE)
-				->from('ivp_editors')
-				->join('users', 'ivp_editors.user = users.id', 'inner')
-				->where('ivp_editors.ivp', $ivp['id'])
+				->select('*')
+				->from('document_edits')
+				->where('document', $ivp['document'])
 				->order_by('stamp', 'desc')
 				->get();
 			foreach ($editors->result_array() as $ed) {
@@ -23,28 +21,29 @@ class IvpModel extends CI_Model {
 		}
 	}
 
-	function load($token, $date) {
-		$ivps = $this->db
-			->select('ivps.id as id')
-			->select('ivps.patient as patient')
-			->select('ivps.date as date')
+	function load($token, $date, $log = TRUE) {
+		$ivp = $this->db
+			->select('ivps.id')
+			->select('occasion')
+			->select('dialogue')
+			->select('measure')
+			->select('iv_minutes')
+			->select('own')
+			->select('group')
+			->select('misc')
+			->select('document')
 			->select('consultations.name as consultation')
-			->select('ivps.occasion as occasion')
-			->select('ivps.dialogue as dialogue')
-			->select('ivps.measure as measure')
-			->select('ivps.iv_minutes as iv_minutes')
-			->select('ivps.own as own')
-			->select('ivps.group as group')
-			->select('ivps.misc as misc')
+			->select('documents.patient as patient')
+			->select('documents.date as date')
 			->from('ivps')
 			->join('consultations', 'ivps.consultation = consultations.id', 'left outer')
-			->where('ivps.patient', $token)
-			->where('ivps.date', $date)
+			->join('documents', 'ivps.document = documents.id', 'inner')
+			->where('patient', $token)
+			->where('date', $date)
 			->limit(1)
 			->get();
-		if ($ivps->num_rows() > 0) {
-			$ivp = $ivps->row_array(); // borde bli en och endast en
-
+		if ($ivp->num_rows() > 0) {
+			$ivp = $ivp->row_array();
 			$this->load_editors($ivp);
 
 			$ivp['measures'] = array();
@@ -71,10 +70,25 @@ class IvpModel extends CI_Model {
 			foreach ($professions->result_array() as $profession) {
 				$ivp['professions'][$profession['name']] = $profession['minutes'];
 			}
-
+			if ($log) {
+				$event_type = $this->db
+					->select('id')
+					->from('event_types')
+					->where('name', 'LOAD')
+					->limit(1)
+					->get();
+				if ($event_type->num_rows() > 0) {
+					$event_type = $event_type->row_array();
+					$event_log = array(
+						'user' => $this->tank_auth->get_user_id(),
+						'event_type' => $event_type['id'],
+						'document' => $ivp['document']);
+					$this->db->insert('event_log', $event_log);
+				}
+			}
 			return $ivp;
 		}
-		return NULL;
+		return FALSE;
 	}
 
 	function init($token, $date) {
@@ -87,7 +101,7 @@ class IvpModel extends CI_Model {
 		foreach ($q->result_array() as $p) {
 			$professions[$p['name']] = '';
 		}
-		$newivp = array(
+		$ivp = array(
 			'patient' => $token,
 			'date' => $date,
 			'occasion' => '',
@@ -98,8 +112,9 @@ class IvpModel extends CI_Model {
 			'iv_minutes' => '',
 			'own' => '',
 			'group' => '',
-			'misc' => '');
-		return $newivp;
+			'misc' => '',
+			'editors' => array());
+		return $ivp;
 	}
 
 	function init_from_post() {
@@ -111,105 +126,153 @@ class IvpModel extends CI_Model {
 		return $ivp;
 	}
 
-	function not_empty($value) {
+	private function not_empty($value) {
 		return is_string($value) && !empty($value);
 	}
 
 	function save() {
-		$consultation = '';
-		if ($cstr = $this->input->post('consultation')) {		// "visit" eller "phone"
-			$cid = $this->db
-				->select('id')
-				->from('consultations')
-				->where('name', $cstr)
-				->limit(1)
-				->get();
-			if ($cid->num_rows() > 0) {
-				$row = $cid->row_array();
-				$consultation = $row['id'];
-			}
-		}
-		$newivp = array_filter(array(
-			'patient' => $this->input->post('patient'),
-			'date' => $this->input->post('date'),
-			'consultation' => $consultation,
-			'occasion' => $this->input->post('occasion'),
-			'dialogue' => $this->input->post('dialogue'),
-			'measure' => $this->input->post('measure'),
-			'iv_minutes' => $this->input->post('iv_minutes'),
-			'own' => $this->input->post('own'),
-			'group' => $this->input->post('group'),
-			'misc' => $this->input->post('misc')), array($this, 'not_empty'));
-
-		$this->db->insert('ivps', $newivp);
-
-		$ivp_id = $this->db
-			->distinct()
+		$document_type = $this->db
 			->select('id')
-			->from('ivps')
-			->where('patient', $newivp['patient'])
-			->where('date', $newivp['date'])
+			->from('document_types')
+			->where('name', 'IVP')
 			->limit(1)
 			->get();
+		if ($document_type->num_rows() > 0) {
+			$document_type = $document_type->row_array();
+			$document_type = $document_type['id'];
 
-		$ivpid = 0;
-		if ($ivp_id->num_rows() > 0) {
-			$row = $ivp_id->row_array();
-			$ivpid = $row['id'];
-		} else {
-			die('FATAL: Error in application/models/ivpmodel.php, newly created IVP not found.');
-		}
+			$patient = $this->input->post('patient');
+			$date = $this->input->post('date');
 
-		$edtr = array(
-			'user' => $this->tank_auth->get_user_id(),
-			'ivp' => $ivpid);
+			$newdoc = array_filter(array(
+				'patient' => $patient,
+				'date' => $date,
+				'document_type' => $document_type), array($this, 'not_empty'));
 
-		$this->db->insert('ivp_editors', $edtr);
+			$this->db->insert('documents', $newdoc);
 
-		if ($posted_professions = $this->input->post('professions')) {
-			$professions = $this->db
+			$document = $this->db
 				->select('id')
-				->select('name')
-				->from('professions')
+				->from('documents')
+				->where('patient', $patient)
+				->where('date', $date)
+				->where('document_type', $document_type)
 				->get();
-			foreach ($professions->result_array() as $p) {
-				$minutes = $posted_professions[$p['name']];
-				$ivps_professions = array(
-					'ivp' => $ivpid,
-					'profession' => $p['id'],
-					'minutes' => ($minutes !== FALSE && !empty($minutes)) ? $minutes : 0);
 
-				$this->db->insert('ivps_professions', $ivps_professions);
+			if ($document->num_rows() > 0) {
+				$document = $document->row_array();
+				$document = $document['id'];
+			} else {
+				die('FATAL: Error in application/models/crfmodel.php, newly created DOCUMENT not found.');
 			}
-		}
 
-		if ($posted_measures = $this->input->post('measures')) {
-			foreach ($posted_measures as $pm) {
-				$measure = $this->db
+			$consultation = '';
+			if ($cstr = $this->input->post('consultation')) {
+				$cid = $this->db
 					->select('id')
-					->from('measures')
-					->where('name', $pm)
+					->from('consultations')
+					->where('name', $cstr)
 					->limit(1)
 					->get();
-				if ($measure->num_rows() > 0) {
-					$m = $measure->row_array();
-					$ivps_measures = array(
-						'ivp' => $ivpid,
-						'measure' => $m['id']);
-					$this->db->insert('ivps_measures', $ivps_measures);
+				if ($cid->num_rows() > 0) {
+					$row = $cid->row_array();
+					$consultation = $row['id'];
 				}
+			}
+			$newivp = array_filter(array(
+				'document' => $document,
+				'consultation' => $consultation,
+				'occasion' => $this->input->post('occasion'),
+				'dialogue' => $this->input->post('dialogue'),
+				'measure' => $this->input->post('measure'),
+				'iv_minutes' => $this->input->post('iv_minutes'),
+				'own' => $this->input->post('own'),
+				'group' => $this->input->post('group'),
+				'misc' => $this->input->post('misc')), array($this, 'not_empty'));
+
+			$this->db->insert('ivps', $newivp);
+
+			$ivp_id = $this->db
+				->distinct()
+				->select('ivps.id')
+				->from('ivps')
+				->join('documents', 'ivps.document = documents.id', 'inner')
+				->where('patient', $patient)
+				->where('date', $date)
+				->limit(1)
+				->get();
+
+			$ivpid = 0;
+			if ($ivp_id->num_rows() > 0) {
+				$ivpid = $ivp_id->row_array();
+				$ivpid = $ivpid['id'];
+			} else {
+				die('FATAL: Error in application/models/ivpmodel.php, newly created IVP not found.');
+			}
+
+			if ($posted_professions = $this->input->post('professions')) {
+				$professions = $this->db
+					->select('id')
+					->select('name')
+					->from('professions')
+					->get();
+				foreach ($professions->result_array() as $p) {
+					$minutes = $posted_professions[$p['name']];
+					$ivps_professions = array(
+						'ivp' => $ivpid,
+						'profession' => $p['id'],
+						'minutes' => ($minutes !== FALSE && !empty($minutes)) ? $minutes : 0);
+
+					$this->db->insert('ivps_professions', $ivps_professions);
+				}
+			}
+
+			if ($posted_measures = $this->input->post('measures')) {
+				foreach ($posted_measures as $pm) {
+					$measure = $this->db
+						->select('id')
+						->from('measures')
+						->where('name', $pm)
+						->limit(1)
+						->get();
+					if ($measure->num_rows() > 0) {
+						$m = $measure->row_array();
+						$ivps_measures = array(
+							'ivp' => $ivpid,
+							'measure' => $m['id']);
+						$this->db->insert('ivps_measures', $ivps_measures);
+					}
+				}
+			}
+
+			$event_type = $this->db
+				->select('id')
+				->from('event_types')
+				->where('name', 'CREATE')
+				->get();
+
+			if ($event_type->num_rows() > 0) {
+				$event_type = $event_type->row_array();
+				$event_type = $event_type['id'];
+
+				$event = array(
+					'user' => $this->tank_auth->get_user_id(),
+					'event_type' => $event_type,
+					'document' => $document);
+
+				$this->db->insert('event_log', $event);
 			}
 		}
 	}
 
-	function update($old_ivp) {
-		//echo '<pre>'; var_dump($old_ivp); echo '</pre>'; die();
+	function update($oldivp) {
+		$ivpid = $oldivp['id'];
+		$document = $oldivp['document'];
 
-		$ivpid = $old_ivp['id'];
 		$changed = FALSE;
 
 		$consultation = '';
-		if ($cstr = $this->input->post('consultation')) {	// "visit" eller "phone"
+		if ($cstr = $this->input->post('consultation')) {
 			$cid = $this->db
 				->select('id')
 				->from('consultations')
@@ -219,7 +282,7 @@ class IvpModel extends CI_Model {
 			if ($cid->num_rows() > 0) {
 				$row = $cid->row_array();
 				$consultation = $row['id'];
-				if (!isset($old_ivp['consultation']) || $old_ivp['consultation'] != $consultation) {
+				if (!isset($oldivp['consultation']) || $oldivp['consultation'] != $consultation) {
 					$change = array('consultation' => $consultation);
 					$this->db->where('id', $ivpid);
 					$this->db->update('ivps', $change);
@@ -229,33 +292,30 @@ class IvpModel extends CI_Model {
 		}
 
 		$changes = array();
-
 		$local_attribs = array('occasion', 'dialogue', 'measure', 
 			'iv_minutes', 'own', 'group', 'misc');
 
 		foreach ($local_attribs as $la) {
 			if ($new = $this->input->post($la)) {
-				if (isset($old_ivp[$la]) && $old_ivp[$la] === $new) {
+				if (isset($oldivp[$la]) && $oldivp[$la] === $new) {
 					continue;
 				} else {
 					$changes[$la] = $new;
 				}
 			} else {
-				if (isset($old_ivp[$la])) {
+				if (isset($oldivp[$la])) {
 					$changes[$la] = NULL;
 				}
 			}
 		}
-		//echo '<pre>'; var_dump($changes); echo '</pre>'; die();
 
 		if (!empty($changes)) {
-			$this->db->where('id', $ivpid);
-			$this->db->update('ivps', $changes);
+			$this->db
+				->where('id', $ivpid)
+				->update('ivps', $changes);
 			$changed = TRUE;
 		}
 
-		//echo '<pre>'; var_dump($this->input->post('professions')); echo '</pre>';
-		// PROFESSIONS
 		$professions = array();
 		$q_professions = $this->db
 			->select('id')
@@ -267,13 +327,10 @@ class IvpModel extends CI_Model {
 			$professions[$p['id']] = $p['name'];
 		}
 		$old_p = array();
-		foreach ($old_ivp['professions'] as $pname => $p) {
+		foreach ($oldivp['professions'] as $pname => $p) {
 			$old_p[$pname] = $p;
 		}
-		//echo '<pre>professions = '; var_dump($professions); echo '</pre>';
-		//echo '<pre>old_p = '; var_dump($old_p); echo '</pre>';
-		if ($posted_professions = $this->input->post('professions')) {	// minst en angiven
-			//echo "<pre>posted_professions = "; var_dump($posted_professions); echo "</pre>";
+		if ($posted_professions = $this->input->post('professions')) {
 			$upd = array();
 			$ins = array();
 			foreach ($professions as $pid => $p) {
@@ -295,8 +352,6 @@ class IvpModel extends CI_Model {
 						'minutes' => $posted_value);
 				}
 			}
-			//echo '<pre>$upd ='; var_dump($upd); echo '</pre>';
-			//echo '<pre>$ins ='; var_dump($ins); echo '</pre>';
 			foreach ($ins as $i) {
 				$this->db->insert('ivps_professions', $i);
 			}
@@ -308,7 +363,6 @@ class IvpModel extends CI_Model {
 			}
 		}
 
-		// MEASURES
 		$old_measures = array();
 		$q_om = $this->db
 			->select('ivp')
@@ -329,18 +383,15 @@ class IvpModel extends CI_Model {
 			->order_by('mid', 'asc')
 			->get();
 		foreach ($q_measures->result_array() as $m) {
-			//echo "<pre>m = "; var_dump($m); echo "</pre>";
 			$measures[$m['name']] = array(
 				'mid' => $m['mid'],
 				'ivp' => (isset($old_measures[$m['name']])) ? $ivpid : NULL);
 		}
-		//echo "<pre>measures = "; var_dump($measures); echo "</pre>";
 		if ($posted_measures = $this->input->post('measures')) {
 			$ipm = array();			// inverted posted measures
 			foreach ($posted_measures as $pm) {
 				$ipm[$pm] = 1;
 			}
-			//echo "<pre>ipm = "; var_dump($ipm); echo "</pre>";
 			$ins = array();
 			$del = array();
 			foreach ($measures as $name => $m) {
@@ -358,8 +409,6 @@ class IvpModel extends CI_Model {
 					}
 				}
 			}
-			//echo "<pre>ins = "; var_dump($ins); echo "</pre>";
-			//echo "<pre>del = "; var_dump($del); echo "</pre>"; die();
 
 			foreach ($ins as $i) {
 				$this->db->insert('ivps_measures', $i);
@@ -381,10 +430,23 @@ class IvpModel extends CI_Model {
 		}
 
 		if ($changed) {
-			$edtr = array(
-				'user' => $this->tank_auth->get_user_id(),
-				'ivp' => $ivpid);
-			$this->db->insert('ivp_editors', $edtr);
+			$event_type = $this->db
+				->select('id')
+				->from('event_types')
+				->where('name', 'CHANGE')
+				->get();
+
+			if ($event_type->num_rows() > 0) {
+				$event_type = $event_type->row_array();
+				$event_type = $event_type['id'];
+
+				$event = array(
+					'user' => $this->tank_auth->get_user_id(),
+					'event_type' => $event_type,
+					'document' => $document);
+
+				$this->db->insert('event_log', $event);
+			}
 		}
 	}
 }
