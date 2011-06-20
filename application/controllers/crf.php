@@ -7,6 +7,17 @@ class Crf extends CI_Controller {
 		$this->load->library('tank_auth');
 	}
 
+	private function _readonly() {
+		$may_write = $this->db
+			->select('*')
+			->from('users_groups')
+			->join('groups', 'users_groups.group = groups.id', 'inner')
+			->where('user', $this->tank_auth->get_user_id())
+			->where('groups.name', 'wuser')
+			->get();
+		return $may_write->num_rows() === 0;
+	}
+
 	function edit($token = -1, $date = -1) {
 		if (!$this->tank_auth->is_logged_in()) {
 			redirect('/auth/login/');
@@ -16,6 +27,9 @@ class Crf extends CI_Controller {
 			if ($date === date('Y-m-d')) {
 				$this->load->model('CrfModel');
 				$crf = $this->CrfModel->load($token, $date);
+				if ($this->_readonly()) {
+					$crf['READONLY'] = 'READONLY';
+				}
 				$this->load->view('crfform', $crf);
 			} else if ($date < date('Y-m-d')) {
 				redirect("/pdf/$token" . '_crf_' . "$date.pdf");
@@ -59,12 +73,15 @@ class Crf extends CI_Controller {
 			if ($this->form_validation->run() == FALSE) {
 				$this->load->model('CrfModel');
 				$crf = $this->CrfModel->init_from_post();
+				if ($this->_readonly()) {
+					$crf['READONLY'] = 'READONLY';
+				}
 				$this->load->view('crfform', $crf);
 			} else {
 				$this->load->model('CrfModel');
 				$patient = $this->input->post('patient');
 				$date = $this->input->post('date');
-				$old_crf = $this->CrfModel->load($patient, $date);
+				$old_crf = $this->CrfModel->load($patient, $date, FALSE);
 
 				if (!$old_crf) {
 					$this->CrfModel->save();
@@ -75,8 +92,11 @@ class Crf extends CI_Controller {
 			}
 		} else {
 			$this->load->model('CrfModel');
-			$new_crf = $this->CrfModel->init($token, date('Y-m-d'));
-			$this->load->view('crfform', $new_crf);
+			$crf = $this->CrfModel->init($token, date('Y-m-d'));
+			if ($this->_readonly()) {
+				$crf['READONLY'] = 'READONLY';
+			}
+			$this->load->view('crfform', $crf);
 		}
 	}
 }

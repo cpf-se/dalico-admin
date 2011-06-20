@@ -8,6 +8,7 @@ function list_documents_by_date($patient, $doctype)
 		'wtp' => array('table' => 'wtps'));
 
 	if ($doctype === 'wtp') return '---';		// <<< XXX: TEMPORARY
+	if ($doctype === 'ivp') return '---';		// <<< XXX: TEMPORARY
 
 	$CI =& get_instance();
 
@@ -18,6 +19,7 @@ function list_documents_by_date($patient, $doctype)
 	$active = $CI->db
 		->select('*')
 		->from($docs[$doctype]['table'])
+		->join('documents', $docs[$doctype]['table'] . '.document = documents.id', 'inner')
 		->where('patient', $patient)
 		->where('date', $today)
 		->where('pdf_url IS NULL')
@@ -36,6 +38,7 @@ function list_documents_by_date($patient, $doctype)
 	$historic = $CI->db
 		->select('*')
 		->from($docs[$doctype]['table'])
+		->join('documents', $docs[$doctype]['table'] . '.document = documents.id', 'inner')
 		->where('patient', $patient)
 		->where('date <', $today)
 		->where('pdf_url IS NOT NULL')

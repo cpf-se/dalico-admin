@@ -14,12 +14,9 @@ class MainModel extends CI_Model {
 			->join('users_groups', 'groups.id = users_groups.group', 'inner')
 			->where('users_groups.user', $userid)
 			->get();
-		$vcs = array();
+		$vcs = array('Dalby', 'Bara');
 		foreach ($groups->result_array() as $group) {
-			if ($group['group'] == 'user') {
-				$vcs[] = 'Dalby';
-				$vcs[] = 'Bara';
-			} else if ($group['group'] == 'cpf') {
+			if ($group['group'] == 'cpf') {
 				$vcs[] = 'CPF';
 			}
 		}

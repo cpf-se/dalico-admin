@@ -353,7 +353,11 @@ foreach ($tubes as $field) {
 </table>
 
 <?php
-echo '<p>' . form_reset('reset', 'Ångra') . form_submit('submit', 'Spara') . '</p>';
+if (isset($READONLY) && $READONLY == 'READONLY') {
+	echo '<p></p>';
+} else {
+	echo '<p>' . form_reset('reset', 'Ångra') . form_submit('submit', 'Spara') . '</p>';
+}
 echo form_close();
 ?>
 
@@ -363,7 +367,7 @@ echo form_close();
 <ul>
 <?php
 foreach ($editors as $ed) {
-	echo '<li>' . $ed['stamp'] . ' (<b>' . $ed['username'] . '</b>)</li>' . "\n";
+	echo '<li>' . $ed['stamp'] . ' (<b>' . $ed['username'] . '</b>) ' . $ed['event_type'] . '</li>' . "\n";
 }}
 ?>
 </ul></div>

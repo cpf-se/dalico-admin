@@ -8,13 +8,11 @@ class CrfModel extends CI_Model {
 
 	private function load_editors(&$crf) {
 		$crf['editors'] = array();
-		if (isset($crf['id'])) {
+		if (isset($crf['document'])) {
 			$editors = $this->db
-				->select('username')
-				->select("to_char(stamp, 'YYYY-MM-DD HH24:MI:SS') as stamp", FALSE)
-				->from('crf_editors')
-				->join('users', 'crf_editors.user = users.id', 'inner')
-				->where('crf_editors.crf', $crf['id'])
+				->select('*')
+				->from('document_edits')
+				->where('document', $crf['document'])
 				->order_by('stamp', 'desc')
 				->get();
 			foreach ($editors->result_array() as $ed) {
@@ -23,10 +21,13 @@ class CrfModel extends CI_Model {
 		}
 	}
 
-	function load($token, $date) {
+	function load($token, $date, $log = TRUE) {
 		$crf = $this->db
-			->select('*')
+			->select('crfs.*')
+			->select('documents.patient as patient')
+			->select('documents.date as date')
 			->from('crfs')
+			->join('documents', 'crfs.document = documents.id', 'inner')
 			->where('patient', $token)
 			->where('date', $date)
 			->limit(1)
@@ -34,6 +35,22 @@ class CrfModel extends CI_Model {
 		if ($crf->num_rows() > 0) {
 			$crf = $crf->row_array();
 			$this->load_editors($crf);
+			if ($log) {
+				$event_type = $this->db
+					->select('id')
+					->from('event_types')
+					->where('name', 'LOAD')
+					->limit(1)
+					->get();
+				if ($event_type->num_rows() > 0) {
+					$event_type = $event_type->row_array();
+					$event_log = array(
+						'user' => $this->tank_auth->get_user_id(),
+						'event_type' => $event_type['id'],
+						'document' => $crf['document']);
+					$this->db->insert('event_log', $event_log);
+				}
+			}
 			return $crf;
 		}
 		return FALSE;
@@ -90,67 +107,98 @@ class CrfModel extends CI_Model {
 	}
 
 	function save() {
-		$newcrf = array_filter(array(
-			'patient' => $this->input->post('patient'),
-			'date' => $this->input->post('date'),
-			'length' => $this->input->post('length'),
-			'weight' => $this->input->post('weight'),
-			'waist' => $this->input->post('waist'),
-			'hip' => $this->input->post('hip'),
-			'bhb' => $this->input->post('bhb'),
-			'fpglukos' => $this->input->post('fpglukos'),
-			'bhba1c' => $this->input->post('bhba1c'),
-			'pnatrium' => $this->input->post('pnatrium'),
-			'pkalium' => $this->input->post('pkalium'),
-			'pkreatinin' => $this->input->post('pkreatinin'),
-			'pkolesterol' => $this->input->post('pkolesterol'),
-			'pldlkolesterol' => $this->input->post('pldlkolesterol'),
-			'phdlkolesterol' => $this->input->post('phdlkolesterol'),
-			'fptriglycerider' => $this->input->post('phdlkolesterol'),
-			'ptsh' => $this->input->post('ptsh'),
-			'pft4' => $this->input->post('pft4'),
-			'pcrp' => $this->input->post('pcrp'),
-			'ualbumin' => $this->input->post('ualbumin'),
-			'bts' => $this->input->post('bts'),
-			'btd' => $this->input->post('btd'),
-			'pulse' => $this->input->post('pulse'),
-			'bts24day' => $this->input->post('bts24day'),
-			'btd24day' => $this->input->post('btd24day'),
-			'bts24night' => $this->input->post('bts24night'),
-			'btd24night' => $this->input->post('btd24night'),
-			'bts24' => $this->input->post('bts24'),
-			'btd24' => $this->input->post('btd24'),
-			'serum' => $this->input->post('serum'),
-			'plasma' => $this->input->post('plasma')), array($this, 'not_empty'));
-
-		$this->db->insert('crfs', $newcrf);
-
-		$crf_id = $this->db
-			->distinct()
+		$document_type = $this->db
 			->select('id')
-			->from('crfs')
-			->where('patient', $newcrf['patient'])
-			->where('date', $newcrf['date'])
+			->from('document_types')
+			->where('name', 'CRF')
 			->limit(1)
 			->get();
+		if ($document_type->num_rows() > 0) {
+			$document_type = $document_type->row_array();
+			$document_type = $document_type['id'];
 
-		$crfid = 0;
-		if ($crf_id->num_rows() > 0) {
-			$row = $crf_id->row_array();
-			$crfid = $row['id'];
-		} else {
-			die('FATAL: Error in application/models/crfmodel.php, newly created CRF not found.');
+			$patient = $this->input->post('patient');
+			$date = $this->input->post('date');
+
+			$newdoc = array_filter(array(
+				'patient' => $patient,
+				'date' => $date,
+				'document_type' => $document_type), array($this, 'not_empty'));
+
+			$this->db->insert('documents', $newdoc);
+
+			$document = $this->db
+				->select('id')
+				->from('documents')
+				->where('patient', $patient)
+				->where('date', $date)
+				->where('document_type', $document_type)
+				->get();
+
+			if ($document->num_rows() > 0) {
+				$document = $document->row_array();
+				$document = $document['id'];
+			} else {
+				die('FATAL: Error in application/models/crfmodel.php, newsly created DOCUMENT not found.');
+			}
+
+			$newcrf = array_filter(array(
+				'document' => $document,
+				'length' => $this->input->post('length'),
+				'weight' => $this->input->post('weight'),
+				'waist' => $this->input->post('waist'),
+				'hip' => $this->input->post('hip'),
+				'bhb' => $this->input->post('bhb'),
+				'fpglukos' => $this->input->post('fpglukos'),
+				'bhba1c' => $this->input->post('bhba1c'),
+				'pnatrium' => $this->input->post('pnatrium'),
+				'pkalium' => $this->input->post('pkalium'),
+				'pkreatinin' => $this->input->post('pkreatinin'),
+				'pkolesterol' => $this->input->post('pkolesterol'),
+				'pldlkolesterol' => $this->input->post('pldlkolesterol'),
+				'phdlkolesterol' => $this->input->post('phdlkolesterol'),
+				'fptriglycerider' => $this->input->post('phdlkolesterol'),
+				'ptsh' => $this->input->post('ptsh'),
+				'pft4' => $this->input->post('pft4'),
+				'pcrp' => $this->input->post('pcrp'),
+				'ualbumin' => $this->input->post('ualbumin'),
+				'bts' => $this->input->post('bts'),
+				'btd' => $this->input->post('btd'),
+				'pulse' => $this->input->post('pulse'),
+				'bts24day' => $this->input->post('bts24day'),
+				'btd24day' => $this->input->post('btd24day'),
+				'bts24night' => $this->input->post('bts24night'),
+				'btd24night' => $this->input->post('btd24night'),
+				'bts24' => $this->input->post('bts24'),
+				'btd24' => $this->input->post('btd24'),
+				'serum' => $this->input->post('serum'),
+				'plasma' => $this->input->post('plasma')), array($this, 'not_empty'));
+
+			$this->db->insert('crfs', $newcrf);
+
+			$event_type = $this->db
+				->select('id')
+				->from('event_types')
+				->where('name', 'CREATE')
+				->get();
+
+			if ($event_type->num_rows() > 0) {
+				$event_type = $event_type->row_array();
+				$event_type = $event_type['id'];
+
+				$event = array(
+					'user' => $this->tank_auth->get_user_id(),
+					'event_type' => $event_type,
+					'document' => $document);
+
+				$this->db->insert('event_log', $event);
+			}
 		}
-
-		$edtr = array(
-			'user' => $this->tank_auth->get_user_id(),
-			'crf' => $crfid);
-
-		$this->db->insert('crf_editors', $edtr);
 	}
 
 	function update($oldcrf) {
 		$crfid = $oldcrf['id'];
+		$document = $oldcrf['document'];
 
 		$changed = FALSE;
 
@@ -185,10 +233,23 @@ class CrfModel extends CI_Model {
 		}
 
 		if ($changed) {
-			$edtr = array(
-				'user'	=> $this->tank_auth->get_user_id(),
-				'crf'	=> $crfid);
-			$this->db->insert('crf_editors', $edtr);
+			$event_type = $this->db
+				->select('id')
+				->from('event_types')
+				->where('name', 'CHANGE')
+				->get();
+
+			if ($event_type->num_rows() > 0) {
+				$event_type = $event_type->row_array();
+				$event_type = $event_type['id'];
+
+				$event = array(
+					'user' => $this->tank_auth->get_user_id(),
+					'event_type' => $event_type,
+					'document' => $document);
+
+				$this->db->insert('event_log', $event);
+			}
 		}
  	}                           
 }
