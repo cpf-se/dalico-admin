@@ -674,6 +674,8 @@ if ($q === 0) {
 // CASE REPORT FORMS
 //=================================================================================================================================
 
+die(0);
+
 function crf_header($pat, $sex, $dat) {
 	$str =	  '\documentclass[a4paper,swedish,11pt]{article}' . "\n"
 		. '\usepackage[utf8]{inputenc}' . "\n"

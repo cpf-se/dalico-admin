@@ -71,7 +71,7 @@ function list_surveys_by_date($patient, $survey)
 		->where('patients.token', $patient)
 		->count_all_results();
 	if ($p > 0) {
-		return '---';
+		return '---';			// too harsh
 	}
 
 	$s = $CI->db

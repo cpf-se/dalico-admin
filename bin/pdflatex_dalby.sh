@@ -15,6 +15,9 @@ while read pat dat; do
 	rm -f *.aux *.log
 done < $temp
 
+rm -f $temp
+exit 0
+
 echo "SELECT patient, date FROM crfs WHERE tex IS NOT NULL AND pdf_url IS NULL" | $PSQL | tr '|' '\t' > $temp
 while read pat dat; do
 	echo -n "CRF $pat... "
