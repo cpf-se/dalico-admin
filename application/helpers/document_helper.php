@@ -60,54 +60,33 @@ function list_surveys_by_date($patient, $survey)
 {
 	$CI =& get_instance();
 
-	$p = $CI->db				// Visa inte Bara-PDF
-		->select('vcs.name as vc')
+	$historic = $CI->db
+		->select('pdf_url')
+		->select("to_char(stamp, 'YYYY-MM-DD') as date", FALSE)
+		->select('responses.patient')
+		->select('vc')
 		->from('responses')
-		->join('patients', 'patients.token = responses.patient', 'inner')
-		->join('lists', 'lists.id = patients.list', 'inner')
-		->join('idops', 'idops.id = lists.idop', 'inner')
-		->join('vcs', 'vcs.id = idops.vc', 'inner')
-		->where('vcs.name', 'Bara')
-		->where('patients.token', $patient)
-		->count_all_results();
-	if ($p > 0) {
-		return '---';			// too harsh
-	}
-
-	$s = $CI->db
-		->select('id')
-		->from('surveys')
-		->where('name', $survey)
-		->limit(1)
+		->join('patients_vcs', 'responses.patient = patients_vcs.patient', 'inner')
+		->join('surveys', 'responses.survey = surveys.id', 'inner')
+		->where('responses.patient', $patient)
+		->where('surveys.name', $survey)
 		->get();
 
-	if ($s->num_rows() > 0) {
-		$s = $s->row_array();
-		$s = $s['id'];
-
-		$historic = $CI->db
-			->select('pdf_url')
-			->select('stamp')
-			->from('responses')
-			->where('pdf_url IS NOT NULL')
-			->where('patient', $patient)
-			->where('survey', $s)
-			->get();
-
-		$rows = array();
-		foreach ($historic->result_array() as $h) {
+	$rows = array();
+	foreach ($historic->result_array() as $h) {
+		if ($h['vc'] == 'Bara' || $h['pdf_url'] == NULL) {
+			$html = '<small>&nbsp;&nbsp;' . $h['date'] . '</small>';
+		} else {
 			$html  = "<small><img src='/pdf.png' alt='PDF icon' />&nbsp;";
-			$html .= "<a href='" . $h['pdf_url'] . "'>" . date('Y-m-d', strtotime($h['stamp'])) . "</a></small>";
-			$rows[] = $html;
+			$html .= "<a href='" . $h['pdf_url'] . "'>" . $h['date'] . "</a></small>";
 		}
-		$html = '---';
-		if (!empty($rows)) {
-			$html = implode('<br />' . "\n", $rows);
-		}
-		return $html;
-	} else {
-		return '---';
+		$rows[] = $html;
 	}
+	$html = '---';
+	if (!empty($rows)) {
+		$html = implode('<br />' . "\n", $rows);
+	}
+	return $html;
 }
 
 ?>
