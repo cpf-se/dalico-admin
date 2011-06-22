@@ -228,20 +228,26 @@ function ipaq(&$qa, &$QTEXT, &$ATEXT) {
 		}
 		$str .= "\n";
 	}
-	$str .= '\item ' . $QTEXT['q168'] . ': ' . $ATEXT[$qa['q168']] . "\n";
+	if (isset($qa['q168'])) {
+		$str .= '\item ' . $QTEXT['q168'] . ': ' . $ATEXT[$qa['q168']] . "\n";
+	} else {
+		$str .= '\item ' . $QTEXT['q168'] . ': ' . '---' . "\n";
+	}
 	$str .= '\end{itemize}}' . "\n\n";
 	return $str;
 }
 
-function dog(&$qa, &$ATEXT) {
+function dog(&$qa, &$ATEXT, $minutes = TRUE) {
 	$str  = '\item Hund' . "\n\n";
 	if (isset($qa['q49'])) {
 		if ($qa['q49'] === 'a57') {
 			$str .= '{\footnotesize Har hund';
-			if (isset($qa['q50'])) {
-				$str .= ', promenerar ' . $ATEXT[$qa['q50']] . ' i veckan';
-			} else {
-				$str .= ', inget svar om promenadtider';
+			if ($minutes) {
+				if (isset($qa['q50'])) {
+					$str .= ', promenerar ' . $ATEXT[$qa['q50']] . ' i veckan';
+				} else {
+					$str .= ', inget svar om promenadtider';
+				}
 			}
 			$str .= '}' . "\n\n";
 		} else {
@@ -266,19 +272,23 @@ function foodhabits(&$qa) {
 			}
 		}
 	}
-	switch ($qa['q54']) {
-	case 'a62': $points += 1;		// sic. inga break!
-	case 'a63': $points += 1;
-	case 'a64': $points += 1;
-	case 'a65':
-	default:
+	if (isset($qa['q54'])) {
+		switch ($qa['q54']) {
+		case 'a62': $points += 1;		// sic. inga break!
+		case 'a63': $points += 1;
+		case 'a64': $points += 1;
+		case 'a65':
+		default:
+		}
 	}
-	switch ($qa['q55']) {
-	case 'a61': $points += 1;
-	case 'a60': $points += 1;
-	case 'a67': $points += 1;
-	case 'a66':
-	default:
+	if (isset($qa['q55'])) {
+		switch ($qa['q55']) {
+		case 'a61': $points += 1;		// sic. inga break;
+		case 'a60': $points += 1;
+		case 'a67': $points += 1;
+		case 'a66':
+		default:
+		}
 	}
 	return '\item Matvanor: ' . texbox($points) . '~poäng' . "\n\n";
 }
@@ -478,100 +488,7 @@ function footing($stoptags) {
 	return $str;
 }
 
-//================== MAIN ===============================================================================================
-
-$quests =
-	_SELECT(array(
-		'tag',
-		'text')
-	)							.
-	_FROM('questions');
-$qres = array();
-$QTEXT = array();
-if (_PGSQL($quests, $qres) > 0) foreach ($qres as $row) {
-	$QTEXT[$row['tag']] = $row['text'];
-}
-
-$answs =
-	_SELECT(array(
-		'tag',
-		'text',
-		'short',
-		'value')
-	)							.
-	_FROM('answers');
-$ares = array();
-$ATEXT = array();
-$ASHORT = array();
-$AVALUE = array();
-if (_PGSQL($answs, $ares) > 0) foreach ($ares as $row) {
-	$ATEXT[$row['tag']] = $row['text'];
-	$ASHORT[$row['tag']] = $row['short'];
-	$AVALUE[$row['tag']] = $row['value'];
-}
-
-$dalby1_lists =
-	_SELECT('lists.id AS list')				.
-	_FROM('lists')						.
-	_JOIN('idops', 'idops.id = lists.idop')			.
-	_JOIN('vcs', 'vcs.id = idops.vc');
-
-$dalby1_patients =
-	_SELECT('patients.token AS patient')			.
-	_FROM('patients')					.
-	_WHERE('list IN ' . _P($dalby1_lists));
-
-$dalby1_responses =
-	_SELECT(array(
-		'responses.id AS response',
-		'responses.stamp AS stamp',
-		'responses.patient AS patient',
-		'surveys.id AS survey')
-	)							.
-	_FROM('responses')					.
-	_JOIN('surveys', 'surveys.id = responses.survey')	.
-	_WHERE(_AND(array(
-		'patient IN ' . _P($dalby1_patients),
-		"surveys.name = 'Dalby 1'",
-		'tex IS NULL'))
-	)							.
-	_ORDERBY('responses.stamp');
-
-$responses = array();
-$q = _PGSQL($dalby1_responses, $responses);
-if ($q === 0) {
-	echo 'Dalby 1: nothing to do.' . "\n";
-} else foreach ($responses as $r) {
-	$RESPONSE_ID = $r['response'];
-	$PATIENT_ID = $r['patient'];
-
-	$questions_answers =
-		_SELECT(array(
-			'questions.tag AS q',
-			'answers.tag AS a')
-		)								.
-		_FROM('rdet')							.
-		_JOIN('questions_answers', _AND(array(
-			'rdet.question = questions_answers.question',
-			'rdet.answer = questions_answers.answer'))
-		)								.
-		_JOIN('questions', 'questions.id = questions_answers.question')	.
-		_JOIN('answers', 'answers.id = questions_answers.answer')	.
-		_WHERE('rdet.response = ' . $RESPONSE_ID);
-
-	$qa = array();
-	$q = _PGSQL($questions_answers, $qa);
-	if ($qa == 0) {
-		continue;
-	}
-	/* else */
-	$QA = array();
-	foreach ($qa as $row) {
-		$QA[$row['q']] = $row['a'];
-	}
-
-	//var_dump($QA); die();
-
+function dalby1(&$r, &$QA, $PATIENT_ID, &$QTEXT, &$ATEXT, &$ASHORT, &$AVALUE, $RESPONSE_ID) {
 	$sex = 'unknown';
 	if (isset($QA['q0000'])) {
 		if ($QA['q0000'] === 'a0001') {
@@ -667,6 +584,293 @@ if ($q === 0) {
 		echo 'Successfully converted ' . $r['patient'] . "\n";
 	} else {
 		echo 'Error updating response for ' . $r['patient'] . "\n";
+	}
+}
+
+function dalby2(&$r, &$QA, $PATIENT_ID, &$QTEXT, &$ATEXT, &$ASHORT, &$AVALUE, $RESPONSE_ID) {
+	$sex =
+		_SELECT('sex')		.
+		_FROM('patients')	.
+		_WHERE(sprintf('token = %s', _Q($PATIENT_ID)));
+	$res = array();
+	$q = _PGSQL($sex, $res);
+	if ($q > 0) {
+		$sex = $res[0]['sex'];
+	} else {
+		$sex = 'unknown';
+	}
+
+	$tex  = heading('Dalby~2', $r['patient'], date('Y-m-d', strtotime($r['stamp'])), $sex);
+
+	$tex .= '\begin{enumerate}' . "\n";
+
+	// Allmänt välbefinnande
+	$answers = array('A1', 'A2', 'A3', 'A4', 'A5');
+	$tex .= list_atexts_with_boxed_answer($QA, 'Allmänt välbefinnande', $ATEXT, $answers, 'q1');
+
+	// EQ5D
+	$tex .= eq5d($QA);
+
+	// Läkemedel/preparat
+	$questions = array('q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q17', 'q18', 'q19', 'q20', 'q21', 'q23', 'q24');
+	$substance_answers = array('a22' /* 3 månader */, 'a23' /* 2 veckor */);
+	foreach ($substance_answers as $answer) {
+		$tex .= list_qtexts($QA, $QTEXT, $ATEXT[$answer], $questions, $answer, ', ');
+	}
+
+	// Besvär/symtom
+	$questions = array('q26', 'q27', 'q28', 'q29', 'q30');
+	$issue_answers = array('a24' /* svåra */, 'a25' /* lätta */);
+	foreach ($issue_answers as $answer) {
+		$tex .= list_qtexts($QA, $QTEXT, $ATEXT[$answer], $questions, $answer, '; ');
+	}
+
+	// Stressad
+	$answers = array('a26', 'a27', 'a28');
+	$tex .= list_atexts_with_boxed_answer($QA, 'Stressad i vardagen', $ATEXT, $answers, 'q31');
+
+	// Sömn
+	$answers = array('a29', 'a30', 'a31', 'a32', 'a33');
+	$tex .= list_atexts_with_boxed_answer($QA, 'Sömn på det hela taget', $ATEXT, $answers, 'q32');
+
+	// Fysisk aktivitet, senaste 7 dagarna (IPAQ)
+	$tex .= ipaq($QA, $QTEXT, $ATEXT);
+
+	// Hund
+	$tex .= dog($QA, $ATEXT, FALSE);	// Dalby 2 har inte följdfrågan om promenadtider
+
+	$tex .= footing(array('enumerate', 'document'));
+
+	$result = array();
+	if (_PGSQL(_UPDATE('responses', array('tex' => str_replace('\\', '\\\\', $tex)), 'id = ' . $RESPONSE_ID), $result) > 0) {
+		echo 'Successfully converted ' . $r['patient'] . "\n";
+	} else {
+		echo 'Error updating response for ' . $r['patient'] . "\n";
+	}
+}
+
+function dalby3(&$r, &$QA, $PATIENT_ID, &$QTEXT, &$ATEXT, &$ASHORT, &$AVALUE, $RESPONSE_ID) {
+	$sex =
+		_SELECT('sex')		.
+		_FROM('patients')	.
+		_WHERE(sprintf('token = %s', _Q($PATIENT_ID)));
+	$res = array();
+	$q = _PGSQL($sex, $res);
+	if ($q > 0) {
+		$sex = $res[0]['sex'];
+	} else {
+		$sex = 'unknown';
+	}
+
+	$newsex = 'unknown';
+	if (isset($QA['q0000'])) {
+		if ($QA['q0000'] === 'a0001') {
+			$newsex = 'male';
+		} else {
+			$newsex = 'female';
+		}
+	}
+	if ($newsex != $sex && $newsex != 'unknown') {
+		$result = array();
+		if (_PGSQL(_UPDATE('patients', array('sex' => $newsex), "token = '$PATIENT_ID'"), $result) > 0) {
+			// success
+		} else {
+			echo "Error setting sex = '$newsex' on patient $PATIENT_ID.\n";
+		}
+		if ($sex != 'unknown') {
+			// transgender
+			$result = array();
+			if (_PGSQL(_UPDATE('patients', array('trans' => $date('Y-m-d', strtotime($r['stamp'])))), $result) > 0) {
+				// success
+			}
+		}
+		$sex = $newsex;
+	}
+
+	$tex  = heading('Dalby~3', $r['patient'], date('Y-m-d', strtotime($r['stamp'])), $sex);
+
+	$tex .= '\begin{enumerate}' . "\n";
+
+	// Allmänt välbefinnande
+	$answers = array('A1', 'A2', 'A3', 'A4', 'A5');
+	$tex .= list_atexts_with_boxed_answer($QA, 'Allmänt välbefinnande', $ATEXT, $answers, 'q1');
+
+	// EQ5D
+	$tex .= eq5d($QA);
+
+	// Läkemedel/preparat
+	$questions = array('q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q17', 'q18', 'q19', 'q20', 'q21', 'q23', 'q24');
+	$substance_answers = array('a22' /* 3 månader */, 'a23' /* 2 veckor */);
+	foreach ($substance_answers as $answer) {
+		$tex .= list_qtexts($QA, $QTEXT, $ATEXT[$answer], $questions, $answer, ', ');
+	}
+
+	// Besvär/symtom
+	$questions = array('q26', 'q27', 'q28', 'q29', 'q30');
+	$issue_answers = array('a24' /* svåra */, 'a25' /* lätta */);
+	foreach ($issue_answers as $answer) {
+		$tex .= list_qtexts($QA, $QTEXT, $ATEXT[$answer], $questions, $answer, '; ');
+	}
+
+	// Stressad
+	$answers = array('a26', 'a27', 'a28');
+	$tex .= list_atexts_with_boxed_answer($QA, 'Stressad i vardagen', $ATEXT, $answers, 'q31');
+
+	// Sömn
+	$answers = array('a29', 'a30', 'a31', 'a32', 'a33');
+	$tex .= list_atexts_with_boxed_answer($QA, 'Sömn på det hela taget', $ATEXT, $answers, 'q32');
+
+	// Göra själv
+	$tex .= print_answer_text($QA, 'Göra själv för att bevara en god hälsa', $ATEXT, 'q33');
+
+	// Förändringsbenägenhet
+	$tex .= print_answer_text($QA, 'Stages of change -- förändringsbenägenhet', $ASHORT, 'q34');
+
+	// Fysisk träning
+	$tex .= print_boxed_avalue($QA, 'Fysisk träning (min/vecka)', $AVALUE, 'q35');
+
+	// Vardagsmotion
+	$tex .= print_boxed_avalue($QA, 'Vardagsmotion (min/vecka)', $AVALUE, 'q36');
+
+	// Fysisk aktivitet, senaste 7 dagarna (IPAQ)
+	$tex .= ipaq($QA, $QTEXT, $ATEXT);
+
+	// Hund
+	$tex .= dog($QA, $ATEXT);
+
+	// Matvanor
+	$tex .= foodhabits($QA);
+
+	// Tobak
+	$tex .= tobacco($QA, $ATEXT);
+
+	// Alkohol
+	$tex .= alcohol($QA, $ATEXT, $sex);
+
+	// Vardagliga situationer
+	$tex .= common_situations($QA);
+
+	// Ångest/oro
+	$tex .= anxiety($QA, $PATIENT_ID);
+
+	// Om fysisk aktivitet och motion
+	$tex .= motivation($QA);
+
+	$tex .= footing(array('enumerate', 'document'));
+
+	//echo $tex;
+	$result = array();
+	if (_PGSQL(_UPDATE('responses', array('tex' => str_replace('\\', '\\\\', $tex)), 'id = ' . $RESPONSE_ID), $result) > 0) {
+		echo 'Successfully converted ' . $r['patient'] . "\n";
+	} else {
+		echo 'Error updating response for ' . $r['patient'] . "\n";
+	}
+}
+
+//================== MAIN ===============================================================================================
+
+$quests =
+	_SELECT(array(
+		'tag',
+		'text')
+	)							.
+	_FROM('questions');
+$qres = array();
+$QTEXT = array();
+if (_PGSQL($quests, $qres) > 0) foreach ($qres as $row) {
+	$QTEXT[$row['tag']] = $row['text'];
+}
+
+$answs =
+	_SELECT(array(
+		'tag',
+		'text',
+		'short',
+		'value')
+	)							.
+	_FROM('answers');
+$ares = array();
+$ATEXT = array();
+$ASHORT = array();
+$AVALUE = array();
+if (_PGSQL($answs, $ares) > 0) foreach ($ares as $row) {
+	$ATEXT[$row['tag']] = $row['text'];
+	$ASHORT[$row['tag']] = $row['short'];
+	$AVALUE[$row['tag']] = $row['value'];
+}
+
+$lists =
+	_SELECT('lists.id AS list')				.
+	_FROM('lists')						.
+	_JOIN('idops', 'idops.id = lists.idop')			.
+	_JOIN('vcs', 'vcs.id = idops.vc');
+
+$patients =
+	_SELECT('patients.token AS patient')			.
+	_FROM('patients')					.
+	_WHERE('list IN ' . _P($lists));
+
+$qresponses =
+	_SELECT(array(
+		'responses.id AS response',
+		'responses.stamp AS stamp',
+		'responses.patient AS patient',
+		'surveys.id AS survey',
+		'surveys.name AS survey_name')
+	)							.
+	_FROM('responses')					.
+	_JOIN('surveys', 'surveys.id = responses.survey')	.
+	_WHERE(_AND(array(
+		'patient IN ' . _P($patients),
+		'tex IS NULL'))
+	)							.
+	_ORDERBY('responses.stamp');
+
+$responses = array();
+$q = _PGSQL($qresponses, $responses);
+if ($q === 0) {
+	echo 'Surveys: nothing to do.' . "\n";
+} else foreach ($responses as $r) {
+	$RESPONSE_ID = $r['response'];
+	$PATIENT_ID = $r['patient'];
+	$SURVEY = $r['survey_name'];
+
+	$questions_answers =
+		_SELECT(array(
+			'questions.tag AS q',
+			'answers.tag AS a')
+		)								.
+		_FROM('rdet')							.
+		_JOIN('questions_answers', _AND(array(
+			'rdet.question = questions_answers.question',
+			'rdet.answer = questions_answers.answer'))
+		)								.
+		_JOIN('questions', 'questions.id = questions_answers.question')	.
+		_JOIN('answers', 'answers.id = questions_answers.answer')	.
+		_WHERE('rdet.response = ' . $RESPONSE_ID);
+
+	$qa = array();
+	$q = _PGSQL($questions_answers, $qa);
+	if ($q == 0) {
+		echo 'continuing' . "\n";
+		continue;
+	}
+	/* else */
+	$QA = array();
+	foreach ($qa as $row) {
+		$QA[$row['q']] = $row['a'];
+	}
+
+	echo 'Survey ' . $SURVEY . ' for patient ' . $PATIENT_ID . '... ';
+	if ($SURVEY === 'Dalby 1') {
+		dalby1($r, $QA, $PATIENT_ID, $QTEXT, $ATEXT, $ASHORT, $AVALUE, $RESPONSE_ID);
+	} elseif ($SURVEY === 'Dalby 2') {
+		dalby2($r, $QA, $PATIENT_ID, $QTEXT, $ATEXT, $ASHORT, $AVALUE, $RESPONSE_ID);
+	} elseif ($SURVEY === 'Dalby 3') {
+		dalby3($r, $QA, $PATIENT_ID, $QTEXT, $ATEXT, $ASHORT, $AVALUE, $RESPONSE_ID);
+	} else {
+		echo 'continuing' . "\n";
+		continue;
 	}
 }
 
