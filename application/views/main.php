@@ -34,7 +34,7 @@ if (isset($pat['warning'])) {
 	echo (($blink++ % 2 == 0) ? 'bluelight' : 'bluedark');
 } ?>">
 	<td class="frame"><tt><b><?=$pat['token']?></b></tt><!--&nbsp;<img src='/<?=$pat['sex']?>.png' alt='sex' /--></td>
-	<td class="frameright"><small><?=$pat['list']?> (<?=$pat['vc']?>)</small></td>
+	<td class="frameright"><small><?=$pat['listid']?> (<?=$pat['vc']?>)</small></td>
 
 	<td class="frameleft"><?php  echo list_surveys_by_date($pat['token'], 'Dalby 1');?></td>
 	<td class="frame"><?php      echo list_surveys_by_date($pat['token'], 'Dalby 2');?></td>

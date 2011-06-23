@@ -35,33 +35,31 @@ class MainModel extends CI_Model {
 			}
 
 			if (!empty($L)) {
-				$total = $this->db
-					->select('responses.patient as patient')
-					->from('responses')
-					->join('surveys', 'surveys.id = responses.survey', 'inner')
-					->join('patients', 'patients.token = responses.patient', 'inner')
+				$active_patients_q = $this->db
+					->select('patient')
+					->select('stamp')
+					->from('active_patients')
+					->join('patients', 'patients.token = patient', 'inner')
 					->where_in('patients.list', $L)
-					->where('surveys.name', 'Dalby 1')
-					->count_all_results();
+					->get();
+				$active_patients = array();
+				foreach ($active_patients_q->result_array() as $ap) {
+					$active_patients[] = sprintf('%s - %s', $ap['patient'], $ap['stamp']);
+				}
 
-				if ($total > 0) {
+				if (count($active_patients) > 0) {
 					$prs = $this->db
-						->select('responses.patient as patient')
-						->select('responses.stamp as dalby1')
-						->select('patients.warning as warning')
-						->select('patients.sex as sex')
-						->select('lists.num as num')
-						->select('idops.name as name')
-						->select('vcs.name as vc')
+						->select('responses.patient')
+						->select('responses.stamp')
+						->select('patients_vcs.listid')
+						->select('patients_vcs.vc')
+						->select('patients.warning')
+						->select('patients.sex')
 						->from('responses')
-						->join('surveys', 'surveys.id = responses.survey', 'inner')
+						->join('patients_vcs', 'patients_vcs.patient = responses.patient', 'inner')
 						->join('patients', 'patients.token = responses.patient', 'inner')
-						->join('lists', 'lists.id = patients.list', 'inner')
-						->join('idops', 'idops.id = lists.idop', 'inner')
-						->join('vcs', 'vcs.id = idops.vc', 'inner')
-						->where_in('patients.list', $L)
-						->where('surveys.name', 'Dalby 1')
-						->order_by('responses.stamp', 'desc')
+						->where_in("responses.patient || ' - ' || stamp", $active_patients)
+						->order_by('stamp', 'desc')
 						->limit($ipp, $offset)
 						->get();
 					$table = array();
@@ -70,11 +68,10 @@ class MainModel extends CI_Model {
 							'token' => $pr['patient'],
 							'warning' => $pr['warning'],
 							'sex' => $pr['sex'],
-							'list' => $pr['name'] . ' ' . $pr['num'],
-							'vc' => $pr['vc'],
-							'dalby1' => $pr['dalby1']);
+							'listid' => $pr['listid'],
+							'vc' => $pr['vc']);
 					}
-					return array('total' => $total, 'patients' => $table);
+					return array('total' => count($active_patients), 'patients' => $table);
 				}
 			}
 		}
