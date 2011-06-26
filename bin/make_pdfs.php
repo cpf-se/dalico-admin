@@ -1017,10 +1017,12 @@ function crf_history(&$r) {
 }
 
 $today = date('Y-m-d');
+
 $crfs =
-	_SELECT('*')							.
-	_FROM('crfs')							.
-	_JOIN('patients', 'patients.token = crfs.patient', 'inner')	.
+	_SELECT('*')								.
+	_FROM('crfs')								.
+	_JOIN('documents', 'documents.id = crfs.document', 'inner')		.
+	_JOIN('patients', 'patients.token = documents.patient', 'inner')	.
 	_WHERE(_AND(array(
 		"date < '$today'",
 		'tex IS NULL')));
