@@ -13,44 +13,26 @@ function list_documents_by_date($patient, $doctype)
 
 	$today = date('Y-m-d');
 
-	$html = '';
+	$html = "<a href='/$doctype/edit/$patient'>Ny</a>";
 
-	$active = $CI->db
+	$documents = $CI->db
 		->select('*')
 		->from($docs[$doctype]['table'])
 		->join('documents', $docs[$doctype]['table'] . '.document = documents.id', 'inner')
 		->where('patient', $patient)
-		->where('date', $today)
-		->where('pdf_url IS NULL')
-		->get();
-
-	if ($active->num_rows() > 0) {
-		$doc = $active->row_array();
-		$html .= "<a href='/$doctype/edit/"
-			. $doc['patient'] . "/"
-			. $doc['date'] . "'>"
-			. $doc['date'] . "</a>";
-	} else {
-		$html .= "<a href='/$doctype/edit/$patient'>Ny</a>";
-	}
-
-	$historic = $CI->db
-		->select('*')
-		->from($docs[$doctype]['table'])
-		->join('documents', $docs[$doctype]['table'] . '.document = documents.id', 'inner')
-		->where('patient', $patient)
-		->where('date <', $today)
-		->where('pdf_url IS NOT NULL')
 		->order_by('date', 'desc')
 		->get();
 
-	foreach ($historic->result_array() as $doc) {
-		$html .= "<br />\n<small><img src='/pdf.png' alt='PDF icon' />&nbsp;";
-		//	$html .= "<a href='/$doctype/pdf/"
-		//		. $doc['patient'] . "/"
-		//		. $doc['date'] . "'>"
-		//		. $doc['date'] . "</a></small>";
-		$html .= "<a href='" . $doc['pdf_url'] . "'>" . $doc['date'] . "</a></small>";
+	foreach ($documents->result_array() as $doc) {
+		if (isset($doc['pdf_url']) && $doc['pdf_url'] != NULL) {
+			$html .= "<br />\n<small><img src='/pdf.png' alt='PDF icon' />&nbsp;";
+			$html .= "<a href='" . $doc['pdf_url'] . "'>" . $doc['date'] . "</a></small>";
+		} else {
+			$html .= "<br />\n<a href='/$doctype/edit/"
+				. $doc['patient'] . "/"
+				. $doc['date'] . "'>"
+				. $doc['date'] . "</a>";
+		}
 	}
 
 	return $html;

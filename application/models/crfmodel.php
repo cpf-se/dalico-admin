@@ -120,6 +120,12 @@ class CrfModel extends CI_Model {
 			$patient = $this->input->post('patient');
 			$date = $this->input->post('date');
 
+			if ($corrdate = $this->input->post('corrdate')) {
+				if ($corrdate != $date) {
+					$date = $corrdate;
+				}
+			}
+
 			$newdoc = array_filter(array(
 				'patient' => $patient,
 				'date' => $date,
@@ -157,7 +163,7 @@ class CrfModel extends CI_Model {
 				'pkolesterol' => $this->input->post('pkolesterol'),
 				'pldlkolesterol' => $this->input->post('pldlkolesterol'),
 				'phdlkolesterol' => $this->input->post('phdlkolesterol'),
-				'fptriglycerider' => $this->input->post('phdlkolesterol'),
+				'fptriglycerider' => $this->input->post('fptriglycerider'),
 				'ptsh' => $this->input->post('ptsh'),
 				'pft4' => $this->input->post('pft4'),
 				'pcrp' => $this->input->post('pcrp'),

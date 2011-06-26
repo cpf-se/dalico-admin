@@ -144,6 +144,12 @@ class IvpModel extends CI_Model {
 			$patient = $this->input->post('patient');
 			$date = $this->input->post('date');
 
+			if ($corrdate = $this->input->post('corrdate')) {
+				if ($corrdate != $date) {
+					$date = $corrdate;
+				}
+			}
+
 			$newdoc = array_filter(array(
 				'patient' => $patient,
 				'date' => $date,

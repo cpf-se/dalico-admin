@@ -28,9 +28,8 @@ div.error {
 	font-size: small;
 	font-weight: bold;
 	margin-right: 50%;
-	border: 1pt solid red;
-	padding-left: 1ex;
-	padding-right: 1ex;
+	border: 2pt solid red;
+	padding: 1ex;
 	color: red;
 }
 

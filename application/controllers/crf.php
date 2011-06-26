@@ -18,26 +18,37 @@ class Crf extends CI_Controller {
 		return $may_write->num_rows() === 0;
 	}
 
+	function dateform($str) {
+		if (!empty($str) && !preg_match('/^\d{4}(-\d{2}){2}$/', $str)) {
+			$this->form_validation->set_message('dateform', 'Fältet %s är på fel form.');
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	function passed_date($str) {
+		if (!empty($str) && $str > date('Y-m-d')) {
+			$this->form_validation->set_message('passed_date', 'Datumet ' . $str . ' har ännu inte passerat.');
+			return FALSE;
+		}
+		return TRUE;
+	}
+
 	function edit($token = -1, $date = -1) {
 		if (!$this->tank_auth->is_logged_in()) {
 			redirect('/auth/login/');
 		} else if (is_numeric($token) || strlen($token) < 7) {
 			redirect('/');
 		} else if (preg_match('/^\d{4}(-\d{2}){2}$/', $date)) {
-			if ($date === date('Y-m-d')) {
-				$this->load->model('CrfModel');
-				$crf = $this->CrfModel->load($token, $date);
-				if ($this->_readonly()) {
-					$crf['READONLY'] = 'READONLY';
-				}
-				$this->load->view('crfform', $crf);
-			} else if ($date < date('Y-m-d')) {
-				redirect("/pdf/$token" . '_crf_' . "$date.pdf");
-			} else {
-				die('Failed searching for future CRF');
+			$this->load->model('CrfModel');
+			$crf = $this->CrfModel->load($token, $date);
+			if ($this->_readonly()) {
+				$crf['READONLY'] = 'READONLY';
 			}
+			$this->load->view('crfform', $crf);
 		} else if ($submit = $this->input->post('submit')) {
 			$this->load->library('form_validation');
+			$this->form_validation->set_rules('corrdate', 'Korrigerat datum', 'callback_dateform|callback_passed_date');
 			$this->form_validation->set_rules('length', 'Längd', 'numeric');
 			$this->form_validation->set_rules('weight', 'Vikt', 'numeric');
 			$this->form_validation->set_rules('waist', 'Midjemått', 'numeric');
@@ -76,6 +87,7 @@ class Crf extends CI_Controller {
 				if ($this->_readonly()) {
 					$crf['READONLY'] = 'READONLY';
 				}
+				$crf['CREATE'] = 'CREATE';
 				$this->load->view('crfform', $crf);
 			} else {
 				$this->load->model('CrfModel');
@@ -96,6 +108,7 @@ class Crf extends CI_Controller {
 			if ($this->_readonly()) {
 				$crf['READONLY'] = 'READONLY';
 			}
+			$crf['CREATE'] = 'CREATE';
 			$this->load->view('crfform', $crf);
 		}
 	}

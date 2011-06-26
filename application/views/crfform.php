@@ -6,6 +6,15 @@
 <?php echo validation_errors();?>
 
 <?php
+$f_corrdate = array(
+	'label' => 'Korrigerat datum',
+	'field' => array(
+		'name' => 'corrdate',
+		'id' => 'corrdate',
+		'size' => 10,
+		'style' => 'text-align: right; background-color: #ff5',
+		'value' => isset($corrdate) ? $corrdate : NULL),
+	'suffix' => '&nbsp;(format YYYY-MM-DD)');
 $f_length = array(
 	'label' => 'Längd',
 	'field' => array(
@@ -291,6 +300,11 @@ $f_hidden = array(
 <?php
 echo form_open("crf/edit/$patient");
 echo form_hidden($f_hidden);
+
+if (isset($CREATE) && $CREATE == 'CREATE') {
+	echo form_label($f_corrdate['label'], $f_corrdate['field']['id']) . "\n";
+	echo form_input($f_corrdate['field']) . $f_corrdate['suffix'] . "\n";
+}
 ?>
 <h2>Labblista</h2>
 <table>

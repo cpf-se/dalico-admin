@@ -15,6 +15,22 @@ class Ivp extends CI_Controller {
 		return TRUE;
 	}
 
+	function dateform($str) {
+		if (!empty($str) && !preg_match('/^\d{4}(-\d{2}){2}$/', $str)) {
+			$this->form_validation->set_message('dateform', 'Fältet %s är på fel form.');
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	function passed_date($str) {
+		if (!empty($str) && $str > date('Y-m-d')) {
+			$this->form_validation->set_message('passed_date', 'Datumet ' . $str . ' har ännu inte passerat.');
+			return FALSE;
+		}
+		return TRUE;
+	}
+
 	private function _readonly() {
 		$may_write = $this->db
 			->select('*')
@@ -32,20 +48,15 @@ class Ivp extends CI_Controller {
 		} else if (is_numeric($token) || strlen($token) < 7) {
 			redirect('/');
 		} else if (preg_match('/^\d{4}(-\d{2}){2}$/', $date)) {
-			if ($date === date('Y-m-d')) {
-				$this->load->model('IvpModel');
-				$ivp = $this->IvpModel->load($token, $date);
-				if ($this->_readonly()) {
-					$ivp['READONLY'] = 'READONLY';
-				}
-				$this->load->view('ivpform', $ivp);
-			} else if ($date < date('Y-m-d')) {
-				redirect("/pdf/$token" . '_ivp_' . "$date.pdf");
-			} else {
-				die("Failed searching for future IVP");
+			$this->load->model('IvpModel');
+			$ivp = $this->IvpModel->load($token, $date);
+			if ($this->_readonly()) {
+				$ivp['READONLY'] = 'READONLY';
 			}
+			$this->load->view('ivpform', $ivp);
 		} else if ($submit = $this->input->post('submit')) {
 			$this->load->library('form_validation');
+			$this->form_validation->set_rules('corrdate', 'Korrigerat datum', 'callback_dateform|callback_passed_date');
 			$this->form_validation->set_rules('occasion', 'Besökstillfälle', 'numeric');
 			$this->form_validation->set_rules('dialogue', 'FaR-samtal', 'numeric');
 			$this->form_validation->set_rules('iv_minutes', 'Tidsåtgång FaR-samtal', 'numeric');
@@ -66,6 +77,7 @@ class Ivp extends CI_Controller {
 				if ($this->_readonly()) {
 					$ivp['READONLY'] = 'READONLY';
 				}
+				$ivp['CREATE'] = 'CREATE';
 				$this->load->view('ivpform', $ivp);
 			} else {
 				$this->load->model('IvpModel');
@@ -86,6 +98,7 @@ class Ivp extends CI_Controller {
 			if ($this->_readonly()) {
 				$ivp['READONLY'] = 'READONLY';
 			}
+			$ivp['CREATE'] = 'CREATE';
 			$this->load->view('ivpform', $ivp);
 		}
 	}
